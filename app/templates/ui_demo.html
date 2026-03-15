@@ -242,18 +242,14 @@ tabAutocompleteModel:
 
   <!-- Table controls -->
   <div class="table-controls mb-md">
-    <div class="flex" style="gap: var(--space-sm); flex-wrap: wrap; align-items: center;">
-      <input type="text" id="table-search-key" class="form-input" placeholder="Filter key name..." aria-label="Filter by key name" style="max-width: 200px; width: auto;">
-      <input type="text" id="table-search-backend" class="form-input" placeholder="Filter backend..." aria-label="Filter by backend profile" style="max-width: 200px; width: auto;">
-    </div>
-    <div class="flex mt-sm" style="gap: var(--space-xs); flex-wrap: wrap; align-items: center;">
-      <span style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">Status:</span>
-      <button type="button" class="btn btn-sm status-chip active" data-status="Active" aria-pressed="true">Active</button>
-      <button type="button" class="btn btn-sm status-chip active" data-status="Revoked" aria-pressed="true">Revoked</button>
-      <button type="button" class="btn btn-sm status-chip active" data-status="Expired" aria-pressed="true">Expired</button>
-      <button type="button" class="btn btn-sm status-chip active" data-status="Blocked" aria-pressed="true">Blocked</button>
-      <span id="table-result-count" class="text-muted" style="font-size: 0.85rem; margin-left: var(--space-sm);"></span>
-    </div>
+    <input type="text" id="table-search-key" class="form-input" placeholder="Key name..." aria-label="Filter by key name" style="max-width: 180px; width: auto;">
+    <input type="text" id="table-search-backend" class="form-input" placeholder="Backend..." aria-label="Filter by backend profile" style="max-width: 180px; width: auto;">
+    <span style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">Status:</span>
+    <button type="button" class="btn btn-sm status-chip active" data-status="Active" aria-pressed="true">Active</button>
+    <button type="button" class="btn btn-sm status-chip active" data-status="Revoked" aria-pressed="true">Revoked</button>
+    <button type="button" class="btn btn-sm status-chip active" data-status="Expired" aria-pressed="true">Expired</button>
+    <button type="button" class="btn btn-sm status-chip active" data-status="Blocked" aria-pressed="true">Blocked</button>
+    <span id="table-result-count" style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap;"></span>
   </div>
 
   <div class="table-wrapper">
@@ -736,6 +732,27 @@ tabAutocompleteModel:
 <!-- ═══════════════════════════════════════════════════════════════
      INTERACTIVE JS — Tabs, Modal, API Key reveal, Theme label
      ═══════════════════════════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════════════
+     ERROR PAGES
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="demo-section-header">
+    <h2>Error Pages</h2>
+    <p>Styled error pages for common HTTP error codes. Click to preview.</p>
+  </div>
+
+  <div class="flex" style="gap: var(--space-sm); flex-wrap: wrap;">
+    <a href="/error/400" class="btn btn-outline btn-sm">400 Bad Request</a>
+    <a href="/error/403" class="btn btn-outline btn-sm">403 Forbidden</a>
+    <a href="/error/404" class="btn btn-outline btn-sm">404 Not Found</a>
+    <a href="/error/405" class="btn btn-outline btn-sm">405 Method Not Allowed</a>
+    <a href="/error/429" class="btn btn-outline btn-sm">429 Too Many Requests</a>
+    <a href="/error/500" class="btn btn-outline btn-sm">500 Internal Server Error</a>
+    <a href="/error/502" class="btn btn-outline btn-sm">502 Bad Gateway</a>
+    <a href="/error/503" class="btn btn-outline btn-sm">503 Service Unavailable</a>
+  </div>
+</div>
+
 <script>
 (function() {
   "use strict";

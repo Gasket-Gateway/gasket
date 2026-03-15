@@ -20,7 +20,10 @@
   {% endif %}
 
   <nav class="navbar" role="navigation" aria-label="Main navigation">
-    <a href="/" class="navbar-brand" aria-label="Gasket Gateway home">⚙ Gasket</a>
+    <a href="/" class="navbar-brand" aria-label="Gasket Gateway home">
+      <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Gasket" height="36" class="logo-light">
+      <img src="{{ url_for('static', filename='img/logo-dark.svg') }}" alt="Gasket" height="36" class="logo-dark">
+    </a>
 
     <button id="navbar-burger" class="navbar-burger" aria-label="Toggle menu" aria-expanded="false" aria-controls="navbar-menu">☰</button>
 

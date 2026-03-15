@@ -86,8 +86,9 @@
     { re: /('(?:[^'\\]|\\.)*')/g,               cls: "token-string"  },   // single-quoted strings
     { re: /\b(true|false|null|yes|no|on|off)\b/gi, cls: "token-keyword" },// booleans
     { re: /\b(\d+\.?\d*)\b/g,                   cls: "token-number"  },   // numbers
-    { re: /^(\s*[\w.-]+)(?=\s*:)/gm,            cls: "token-property"},   // keys (word before colon)
+    { re: /^(\s*(?:-\s+)?[\w.-]+)(?=\s*:)/gm,   cls: "token-property"},   // keys: `name:` or `- name:`
     { re: /(---)/g,                              cls: "token-punct"   },   // document start
+    { re: /:\s+([^\s"'#\n][^#\n]*)/g,            cls: "token-value"   },   // unquoted values after colon
   ];
 
   function detectLang(codeEl) {

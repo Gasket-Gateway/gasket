@@ -124,7 +124,10 @@
 
       if (resultCount) {
         var total = rows.length;
-        resultCount.textContent = visible === total ? total + " rows" : visible + " of " + total + " rows";
+        var countText = visible === total
+          ? String(total)
+          : visible + " of " + total;
+        resultCount.innerHTML = 'Rows: <span class="result-pill">' + countText + '</span>';
       }
     }
 

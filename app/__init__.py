@@ -25,9 +25,11 @@ def create_app(config_path=None):
     # Register blueprints
     from .routes.health import health_bp
     from .routes.ui_demo import ui_demo_bp
+    from .routes.errors import errors_bp
 
     app.register_blueprint(health_bp)
     app.register_blueprint(ui_demo_bp)
+    app.register_blueprint(errors_bp)
 
     # Inject template context
     @app.context_processor

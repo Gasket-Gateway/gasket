@@ -128,7 +128,7 @@ html {
 }
 
 body {
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   font-weight: 400;
   line-height: 1.6;
   color: var(--text-primary);
@@ -272,26 +272,29 @@ mark {
 }
 
 .navbar-brand {
-  font-size: 1.2rem;
-  font-weight: 900;
-  color: var(--on-accent);
-  background: var(--accent-primary);
-  border: var(--border-width) solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: var(--space-xs) var(--space-md);
-  transform: rotate(-1deg);
-  display: inline-block;
-  box-shadow: var(--shadow-sm);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  border-bottom: var(--border-width) solid var(--border-color);
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  background: none;
+  padding: 0;
+  line-height: 1;
+}
+
+.navbar-brand img {
+  display: block;
+  height: 36px;
+  width: auto;
 }
 
 .navbar-brand:hover {
-  border-bottom: var(--border-width) solid var(--border-color);
-  transform: rotate(-1deg) translate(1px, 1px);
-  box-shadow: 1px 1px 0 var(--border-color);
+  border: none;
+  opacity: 0.85;
 }
+
+/* Logo theme switching */
+.logo-dark { display: none !important; }
+[data-theme="dark"] .logo-dark { display: block !important; }
+[data-theme="dark"] .logo-light { display: none !important; }
 
 .navbar-nav {
   display: flex;
@@ -363,7 +366,7 @@ mark {
   justify-content: center;
   gap: var(--space-xs);
   padding: var(--space-sm) var(--space-lg);
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   font-size: 0.95rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -536,7 +539,7 @@ mark {
 .form-textarea {
   width: 100%;
   padding: var(--space-sm) var(--space-md);
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   font-size: 1rem;
   color: var(--text-primary);
   background: var(--bg-secondary);
@@ -742,19 +745,67 @@ mark {
   color: var(--accent-primary);
 }
 
-/* Status filter chips */
+/* Status filter chips — match badge colours */
 .status-chip {
   opacity: 0.4;
   background: var(--bg-tertiary);
   color: var(--text-muted);
   border-color: var(--border-color);
+  transition: all var(--transition-fast);
 }
 
 .status-chip.active {
   opacity: 1;
-  background: var(--accent-primary);
-  color: var(--on-accent);
-  border-color: var(--accent-primary);
+}
+
+.status-chip[data-status="Active"].active {
+  background: var(--color-success);
+  color: var(--on-semantic);
+  border-color: var(--border-color);
+}
+
+.status-chip[data-status="Revoked"].active {
+  background: var(--color-danger);
+  color: var(--on-semantic);
+  border-color: var(--border-color);
+}
+
+.status-chip[data-status="Expired"].active {
+  background: var(--color-danger);
+  color: var(--on-semantic);
+  border-color: var(--border-color);
+}
+
+.status-chip[data-status="Blocked"].active {
+  background: var(--color-warning);
+  color: var(--on-semantic);
+  border-color: var(--border-color);
+}
+
+/* Table controls — horizontal layout */
+.table-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+/* Result count pill */
+.result-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 0.15em 0.6em;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border-color);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
 }
 
 .mt-sm { margin-top: var(--space-sm); }
@@ -845,7 +896,7 @@ mark {
   margin-bottom: calc(-1 * var(--border-width));
   transition: all var(--transition-fast);
   background: transparent;
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   font-size: 0.95rem;
   color: var(--text-secondary);
 }
@@ -1270,6 +1321,8 @@ a:focus-visible {
   margin-bottom: var(--space-sm);
   transform: rotate(-1deg);
   border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .demo-section-header p {
@@ -1396,7 +1449,7 @@ a:focus-visible {
   border: 2px solid var(--border-color);
   border-radius: var(--radius-sm);
   padding: 2px 10px;
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   font-size: 0.75rem;
   font-weight: 700;
   cursor: pointer;
@@ -1423,7 +1476,7 @@ a:focus-visible {
    SYNTAX HIGHLIGHTING (vanilla — no external libraries)
    ═══════════════════════════════════════════════════════════════════ */
 .token-keyword  { color: #6366f1; font-weight: 600; }
-.token-string   { color: #2e9e6e; }
+.token-string   { color: #0d7d4d; }
 .token-number   { color: #c26230; }
 .token-comment  { color: var(--text-muted); font-style: italic; }
 .token-punct    { color: var(--text-muted); }
@@ -1431,6 +1484,8 @@ a:focus-visible {
 .token-shell    { color: var(--text-muted); font-weight: 700; }
 .token-flag     { color: #6366f1; }
 .token-url      { color: #2563eb; text-decoration: underline; }
+.token-value    { color: #0d7d4d; }
+.token-list-dash { color: #c26230; font-weight: 700; }
 
 [data-theme="dark"] .token-keyword  { color: #a5b4fc; }
 [data-theme="dark"] .token-string   { color: #6ee7b7; }
@@ -1438,3 +1493,5 @@ a:focus-visible {
 [data-theme="dark"] .token-property { color: #60a5fa; }
 [data-theme="dark"] .token-flag     { color: #a5b4fc; }
 [data-theme="dark"] .token-url      { color: #60a5fa; }
+[data-theme="dark"] .token-value    { color: #6ee7b7; }
+[data-theme="dark"] .token-list-dash { color: #fdba74; }

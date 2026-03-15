@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}{{ error_code }} — {{ error_title }} — Gasket Gateway{% endblock %}
+
+{% block content %}
+<div style="text-align: center; padding: var(--space-2xl) 0;">
+  <div class="demo-section-header" style="margin-bottom: var(--space-lg);">
+    <h2 style="background: var(--color-danger);">{{ error_code }}</h2>
+  </div>
+
+  <h1 style="margin-bottom: var(--space-md);">{{ error_title }}</h1>
+  <p style="font-size: 1.1rem; color: var(--text-secondary); margin-bottom: var(--space-xl); max-width: 500px; margin-left: auto; margin-right: auto;">
+    {{ error_message }}
+  </p>
+
+  <a href="/" class="btn btn-primary">Back to Portal</a>
+</div>
+{% endblock %}
