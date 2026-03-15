@@ -1,0 +1,63 @@
+# Gasket Gateway — Production (3 HA instances + PostgreSQL)
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: gasket-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gasket
+      POSTGRES_USER: gasket
+      POSTGRES_PASSWORD: gasket-dev-password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  gasket-1:
+    build: .
+    image: gasket:dev
+    container_name: gasket-1
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    ports:
+      - "5000:5000"
+      - "9050:9050"
+    volumes:
+      - ./config.yaml:/etc/gasket/config.yaml:ro
+    environment:
+      GASKET_INSTANCE: "1"
+
+  gasket-2:
+    build: .
+    image: gasket:dev
+    container_name: gasket-2
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    ports:
+      - "5001:5000"
+      - "9051:9050"
+    volumes:
+      - ./config.yaml:/etc/gasket/config.yaml:ro
+    environment:
+      GASKET_INSTANCE: "2"
+
+  gasket-3:
+    build: .
+    image: gasket:dev
+    container_name: gasket-3
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    ports:
+      - "5002:5000"
+      - "9052:9050"
+    volumes:
+      - ./config.yaml:/etc/gasket/config.yaml:ro
+    environment:
+      GASKET_INSTANCE: "3"
+
+volumes:
+  pgdata:
+    driver: local

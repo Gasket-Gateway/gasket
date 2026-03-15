@@ -1,0 +1,807 @@
+{% extends "base.html" %}
+{% block title %}UI Component Demo — Gasket Gateway{% endblock %}
+
+{% block content %}
+
+<h1>UI Component Demo</h1>
+<p>Neo-brutalism design system showcase. All components are built with custom CSS — no external UI libraries.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     TYPOGRAPHY
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="demo-section-header">
+    <h2>Typography</h2>
+    <p>Font hierarchy, text styles, and inline elements.</p>
+  </div>
+
+  <h1>Heading 1 — Gasket Gateway</h1>
+  <h2>Heading 2 — Backend Profiles</h2>
+  <h3>Heading 3 — API Key Management</h3>
+  <h4>Heading 4 — Quota Configuration</h4>
+  <h5>Heading 5 — Audit Records</h5>
+  <h6>Heading 6 — System Status</h6>
+
+  <p>This is body text. Gasket acts as an <strong>authenticated proxy</strong> and portal for <a href="#">OpenAI-compliant backends</a>. It supports <em>multiple concurrent instances</em> for high availability.</p>
+
+  <p>Inline <code>code snippet</code> and a <mark>highlighted term</mark>. <small>Small text for captions.</small></p>
+
+  <pre role="group" aria-label="Code example"><code class="language-yaml"># ~/.continue/config.yaml — VSCode Continue configuration
+models:
+  - name: "gasket-gpt4o"
+    title: "GPT-4o via Gasket"
+    provider: openai
+    apiBase: "https://api.gasket.local/v1"
+    apiKey: "gsk_a1b2c3d4e5f6g7h8"
+    model: "gpt-4o"
+    completionOptions:
+      temperature: 0.7
+      maxTokens: 4096
+
+  - name: "gasket-llama"
+    title: "Llama 3.2 via Gasket"
+    provider: openai
+    apiBase: "https://api.gasket.local/v1"
+    apiKey: "gsk_a1b2c3d4e5f6g7h8"
+    model: "llama3.2"
+
+tabAutocompleteModel:
+  title: "Gasket Autocomplete"
+  provider: openai
+  apiBase: "https://api.gasket.local/v1"
+  apiKey: "gsk_a1b2c3d4e5f6g7h8"
+  model: "llama3.2"</code></pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     BUTTONS
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="demo-section-header">
+    <h2>Buttons</h2>
+    <p>Action buttons with neo-brut hard shadows. Click to feel the press effect.</p>
+  </div>
+
+  <div class="flex mb-lg">
+    <button class="btn btn-primary">Primary</button>
+    <button class="btn btn-secondary">Secondary</button>
+    <button class="btn btn-success">Success</button>
+    <button class="btn btn-danger">Danger</button>
+    <button class="btn btn-info">Info</button>
+    <button class="btn btn-outline">Outline</button>
+  </div>
+
+  <div class="flex mb-lg">
+    <button class="btn btn-primary btn-sm">Small</button>
+    <button class="btn btn-primary">Default</button>
+    <button class="btn btn-primary btn-lg">Large</button>
+  </div>
+
+  <div class="flex">
+    <button class="btn btn-primary" disabled>Disabled</button>
+    <button class="btn btn-danger" disabled>Can't Touch This</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     FORM ELEMENTS
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="demo-section-header">
+    <h2>Form Elements</h2>
+    <p>Inputs, selects, textareas, checkboxes, radios, and toggles.</p>
+  </div>
+
+  <div class="grid grid-2">
+    <div>
+      <div class="form-group">
+        <label class="form-label" for="demo-key-name">API Key Name</label>
+        <input class="form-input" type="text" id="demo-key-name" placeholder="e.g. My Dev Key">
+        <p class="form-hint">A label to identify this API key</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="demo-profile">Backend Profile</label>
+        <select class="form-select" id="demo-profile">
+          <option>Select a profile...</option>
+          <option>Production — GPT-4o</option>
+          <option>Development — Llama 3.2</option>
+          <option>Staging — Mixtral</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="demo-expiry">Expiry Date</label>
+        <input class="form-input" type="date" id="demo-expiry">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="demo-notes">Notes</label>
+        <textarea class="form-textarea" id="demo-notes" placeholder="Optional notes about this key..."></textarea>
+      </div>
+    </div>
+
+    <div>
+      <div class="form-group">
+        <p class="form-label">Opt-in Features</p>
+        <label class="form-check">
+          <input type="checkbox" class="form-check-input" checked>
+          <span class="form-check-label">VSCode Continue config generation</span>
+        </label>
+        <label class="form-check">
+          <input type="checkbox" class="form-check-input">
+          <span class="form-check-label">Open WebUI header support</span>
+        </label>
+        <label class="form-check">
+          <input type="checkbox" class="form-check-input" checked>
+          <span class="form-check-label">Full request/response audit</span>
+        </label>
+      </div>
+
+      <div class="form-group">
+        <p class="form-label">Quota Period</p>
+        <label class="form-check">
+          <input type="radio" name="quota-period" class="form-check-input" checked>
+          <span class="form-check-label">Daily</span>
+        </label>
+        <label class="form-check">
+          <input type="radio" name="quota-period" class="form-check-input">
+          <span class="form-check-label">Weekly</span>
+        </label>
+        <label class="form-check">
+          <input type="radio" name="quota-period" class="form-check-input">
+          <span class="form-check-label">Monthly</span>
+        </label>
+      </div>
+
+      <div class="form-group">
+        <p class="form-label">Metadata Audit</p>
+        <div class="flex">
+          <label class="toggle-switch">
+            <input type="checkbox" checked>
+            <span class="toggle-slider"></span>
+          </label>
+          <span>Enabled</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     CARDS
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="demo-section-header">
+    <h2>Cards</h2>
+    <p>Content containers with accent borders and interactive hover.</p>
+  </div>
+
+  <div class="grid grid-3">
+    <div class="card card-accent-orange">
+      <div class="card-header">Backend Profile</div>
+      <div class="card-body">
+        <p>Production — GPT-4o. 3 backends configured, metadata audit enabled.</p>
+      </div>
+      <div class="card-footer">
+        <button class="btn btn-primary btn-sm">Manage</button>
+        <button class="btn btn-outline btn-sm">View Keys</button>
+      </div>
+    </div>
+
+    <div class="card card-accent-green">
+      <div class="card-header">System Status</div>
+      <div class="card-body">
+        <div class="status-indicator mb-sm"><span class="status-dot status-connected"></span> PostgreSQL</div><br>
+        <div class="status-indicator mb-sm"><span class="status-dot status-connected"></span> OIDC Provider</div><br>
+        <div class="status-indicator mb-sm"><span class="status-dot status-error"></span> OpenSearch</div><br>
+        <div class="status-indicator"><span class="status-dot status-connected"></span> Prometheus</div>
+      </div>
+    </div>
+
+    <div class="card card-accent-blue">
+      <div class="card-header">Usage This Week</div>
+      <div class="card-body">
+        <p><strong>12,450</strong> tokens used</p>
+        <p><strong>156</strong> API calls</p>
+        <p><strong>3</strong> active users</p>
+      </div>
+      <div class="card-footer">
+        <button class="btn btn-info btn-sm">Dashboard</button>
+      </div>
+    </div>
+
+    <div class="card card-accent-purple">
+      <div class="card-header">Audit Summary</div>
+      <div class="card-body">
+        <p>Last 24h: <strong>89</strong> records</p>
+        <p>Full content audits: <strong>23</strong></p>
+      </div>
+    </div>
+
+    <div class="card card-accent-yellow">
+      <div class="card-header">Quota Status</div>
+      <div class="card-body">
+        <p>Daily limit: <strong>50,000</strong> tokens</p>
+        <div class="progress mt-sm" style="height:22px;">
+          <div class="progress-bar progress-bar-warning" style="width: 68%;">68%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     TABLES
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="demo-section-header">
+    <h2>Tables</h2>
+    <p>Data tables for API keys, audit records, and admin views.</p>
+  </div>
+
+  <!-- Table controls -->
+  <div class="table-controls mb-md">
+    <div class="flex" style="gap: var(--space-sm); flex-wrap: wrap; align-items: center;">
+      <input type="text" id="table-search-key" class="form-input" placeholder="Filter key name..." aria-label="Filter by key name" style="max-width: 200px; width: auto;">
+      <input type="text" id="table-search-backend" class="form-input" placeholder="Filter backend..." aria-label="Filter by backend profile" style="max-width: 200px; width: auto;">
+    </div>
+    <div class="flex mt-sm" style="gap: var(--space-xs); flex-wrap: wrap; align-items: center;">
+      <span style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">Status:</span>
+      <button type="button" class="btn btn-sm status-chip active" data-status="Active" aria-pressed="true">Active</button>
+      <button type="button" class="btn btn-sm status-chip active" data-status="Revoked" aria-pressed="true">Revoked</button>
+      <button type="button" class="btn btn-sm status-chip active" data-status="Expired" aria-pressed="true">Expired</button>
+      <button type="button" class="btn btn-sm status-chip active" data-status="Blocked" aria-pressed="true">Blocked</button>
+      <span id="table-result-count" class="text-muted" style="font-size: 0.85rem; margin-left: var(--space-sm);"></span>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <table class="table table-sortable" id="demo-table">
+      <thead>
+        <tr>
+          <th data-col="0" data-type="string">Key Name</th>
+          <th data-col="1" data-type="string">Backend Profile</th>
+          <th data-col="2" data-type="date">Created</th>
+          <th data-col="3" data-type="date">Expires</th>
+          <th data-col="4" data-type="date">Last Used</th>
+          <th data-col="5" data-type="string">Status</th>
+          <th data-col="6" data-type="number">Tokens Used</th>
+          <th data-no-sort>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>dev-key-1</strong></td>
+          <td>Production — GPT-4o</td>
+          <td data-sort-value="2026-03-01T09:30:00">1 Mar 2026, 09:30</td>
+          <td data-sort-value="2026-06-01T00:00:00">1 Jun 2026</td>
+          <td data-sort-value="2026-03-15T14:22:10">15 Mar 2026, 14:22</td>
+          <td><span class="badge badge-success">Active</span></td>
+          <td data-sort-value="8234">8,234</td>
+          <td>
+            <button class="btn btn-outline btn-sm">Edit</button>
+            <button class="btn btn-danger btn-sm">Revoke</button>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>staging-test</strong></td>
+          <td>Staging — Mixtral</td>
+          <td data-sort-value="2026-02-15T11:00:00">15 Feb 2026, 11:00</td>
+          <td data-sort-value="2026-05-15T00:00:00">15 May 2026</td>
+          <td data-sort-value="2026-03-14T08:45:30">14 Mar 2026, 08:45</td>
+          <td><span class="badge badge-success">Active</span></td>
+          <td data-sort-value="1102">1,102</td>
+          <td>
+            <button class="btn btn-outline btn-sm">Edit</button>
+            <button class="btn btn-danger btn-sm">Revoke</button>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>ci-pipeline</strong></td>
+          <td>Production — GPT-4o</td>
+          <td data-sort-value="2026-01-20T16:15:00">20 Jan 2026, 16:15</td>
+          <td data-sort-value="2026-07-20T00:00:00">20 Jul 2026</td>
+          <td data-sort-value="2026-03-15T16:01:00">15 Mar 2026, 16:01</td>
+          <td><span class="badge badge-success">Active</span></td>
+          <td data-sort-value="22450">22,450</td>
+          <td>
+            <button class="btn btn-outline btn-sm">Edit</button>
+            <button class="btn btn-danger btn-sm">Revoke</button>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>old-key</strong></td>
+          <td>Development — Llama 3.2</td>
+          <td data-sort-value="2025-12-01T10:00:00">1 Dec 2025, 10:00</td>
+          <td data-sort-value="2026-01-01T00:00:00">1 Jan 2026</td>
+          <td data-sort-value="2025-12-28T23:59:00">28 Dec 2025, 23:59</td>
+          <td><span class="badge badge-danger">Expired</span></td>
+          <td data-sort-value="45678">45,678</td>
+          <td>
+            <button class="btn btn-outline btn-sm" disabled>Edit</button>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>blocked-key</strong></td>
+          <td>Production — GPT-4o</td>
+          <td data-sort-value="2026-01-10T08:30:00">10 Jan 2026, 08:30</td>
+          <td data-sort-value="2026-04-10T00:00:00">10 Apr 2026</td>
+          <td data-sort-value="2026-02-28T12:00:00">28 Feb 2026, 12:00</td>
+          <td><span class="badge badge-warning">Blocked</span></td>
+          <td data-sort-value="50000">50,000</td>
+          <td>
+            <button class="btn btn-outline btn-sm">Edit</button>
+            <button class="btn btn-success btn-sm">Restore</button>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>intern-temp</strong></td>
+          <td>Staging — Mixtral</td>
+          <td data-sort-value="2026-02-01T09:00:00">1 Feb 2026, 09:00</td>
+          <td data-sort-value="2026-03-01T00:00:00">1 Mar 2026</td>
+          <td data-sort-value="2026-02-20T17:30:00">20 Feb 2026, 17:30</td>
+          <td><span class="badge badge-danger">Revoked</span></td>
+          <td data-sort-value="312">312</td>
+          <td>
+            <button class="btn btn-outline btn-sm" disabled>Edit</button>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>analytics-svc</strong></td>
+          <td>Development — Llama 3.2</td>
+          <td data-sort-value="2026-03-10T13:45:00">10 Mar 2026, 13:45</td>
+          <td data-sort-value="2026-09-10T00:00:00">10 Sep 2026</td>
+          <td data-sort-value="2026-03-15T15:58:00">15 Mar 2026, 15:58</td>
+          <td><span class="badge badge-success">Active</span></td>
+          <td data-sort-value="975">975</td>
+          <td>
+            <button class="btn btn-outline btn-sm">Edit</button>
+            <button class="btn btn-danger btn-sm">Revoke</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     ALERTS & BANNERS
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="demo-section-header">
+    <h2>Alerts &amp; Banners</h2>
+    <p>Notification messages for info, success, warning, and error states.</p>
+  </div>
+
+  <div class="alert alert-info" role="alert">
+    <span class="alert-icon" aria-hidden="true">ℹ️</span>
+    <div><strong>Info:</strong> Your API key <code>dev-key-1</code> will expire in 30 days. Consider rotating it.</div>
+  </div>
+
+  <div class="alert alert-success" role="alert">
+    <span class="alert-icon" aria-hidden="true">✅</span>
+    <div><strong>Success:</strong> API key created successfully. Copy your key now — it won't be shown again.</div>
+  </div>
+
+  <div class="alert alert-warning" role="alert">
+    <span class="alert-icon" aria-hidden="true">⚠️</span>
+    <div><strong>Warning:</strong> You have used 85% of your daily token quota. Requests may be blocked soon.</div>
+  </div>
+
+  <div class="alert alert-danger" role="alert">
+    <span class="alert-icon" aria-hidden="true">🚫</span>
+    <div><strong>Error:</strong> Failed to connect to OpenSearch. Audit records are not being stored.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     BADGES
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="demo-section-header">
+    <h2>Badges &amp; Pills</h2>
+    <p>Status indicators, counts, and labels.</p>
+  </div>
+
+  <div class="flex mb-lg">
+    <span class="badge badge-primary">Primary</span>
+    <span class="badge badge-success">Active</span>
+    <span class="badge badge-warning">Blocked</span>
+    <span class="badge badge-danger">Expired</span>
+    <span class="badge badge-info">Pending</span>
+    <span class="badge badge-outline">Draft</span>
+  </div>
+
+  <div class="flex">
+    <span class="badge badge-primary badge-count">3</span>
+    <span class="badge badge-danger badge-count">12</span>
+    <span class="badge badge-info badge-count">99+</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     NAVIGATION PATTERNS
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="demo-section-header">
+    <h2>Navigation</h2>
+    <p>Tabs, breadcrumbs, and sidebar navigation patterns.</p>
+  </div>
+
+  <h4>Breadcrumbs</h4>
+  <div class="breadcrumbs mb-lg">
+    <a href="#">Portal</a>
+    <span>›</span>
+    <a href="#">API Keys</a>
+    <span>›</span>
+    <a href="#">dev-key-1</a>
+  </div>
+
+  <h4>Tabs</h4>
+  <div class="tabs" id="demo-tabs">
+    <button class="tab active" data-tab="tab-overview">Overview</button>
+    <button class="tab" data-tab="tab-usage">Usage Metrics</button>
+    <button class="tab" data-tab="tab-quotas">Quotas</button>
+    <button class="tab" data-tab="tab-audit">Audit Log</button>
+  </div>
+  <div id="tab-overview" class="tab-content active">
+    <div class="card">
+      <div class="card-body">
+        <p>This is the <strong>Overview</strong> tab content. Shows general information about the selected resource.</p>
+      </div>
+    </div>
+  </div>
+  <div id="tab-usage" class="tab-content">
+    <div class="card">
+      <div class="card-body">
+        <p>This is the <strong>Usage Metrics</strong> tab. Shows token usage, latency, and success/failure rates from Prometheus.</p>
+      </div>
+    </div>
+  </div>
+  <div id="tab-quotas" class="tab-content">
+    <div class="card">
+      <div class="card-body">
+        <p>This is the <strong>Quotas</strong> tab. Shows quota consumption and active block statuses.</p>
+      </div>
+    </div>
+  </div>
+  <div id="tab-audit" class="tab-content">
+    <div class="card">
+      <div class="card-body">
+        <p>This is the <strong>Audit Log</strong> tab. Search and view audit records from OpenSearch.</p>
+      </div>
+    </div>
+  </div>
+
+  <h4 class="mt-lg">Sidebar (inline demo)</h4>
+  <div style="display:flex; border: var(--border-width) solid var(--border-color); border-radius: var(--radius-md); overflow:hidden; box-shadow: var(--shadow-md);">
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">Portal</div>
+        <a href="#" class="sidebar-link active">🏠 Dashboard</a>
+        <a href="#" class="sidebar-link">🔑 API Keys</a>
+        <a href="#" class="sidebar-link">📋 Policies</a>
+        <a href="#" class="sidebar-link">📊 Usage</a>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-title">Admin</div>
+        <a href="#" class="sidebar-link">⚙️ System Status</a>
+        <a href="#" class="sidebar-link">👥 All Keys</a>
+        <a href="#" class="sidebar-link">📝 Audit</a>
+        <a href="#" class="sidebar-link">📈 Dashboards</a>
+      </div>
+    </div>
+    <div style="flex:1; padding: var(--space-lg);">
+      <p>Main content area beside the sidebar navigation.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PROGRESS BARS & QUOTA INDICATORS
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="demo-section-header">
+    <h2>Progress Bars &amp; Quota Indicators</h2>
+    <p>Visual indicators for quotas, usage limits, and loading states.</p>
+  </div>
+
+  <div class="grid grid-2">
+    <div>
+      <p class="form-label">Daily Token Quota — 25%</p>
+      <div class="progress mb-md">
+        <div class="progress-bar progress-bar-success" style="width: 25%;">25%</div>
+      </div>
+
+      <p class="form-label">Daily Token Quota — 68%</p>
+      <div class="progress mb-md">
+        <div class="progress-bar progress-bar-warning" style="width: 68%;">68%</div>
+      </div>
+
+      <p class="form-label">Daily Token Quota — 92%</p>
+      <div class="progress mb-md">
+        <div class="progress-bar progress-bar-danger" style="width: 92%;">92%</div>
+      </div>
+
+      <p class="form-label">API Calls Today — 45%</p>
+      <div class="progress">
+        <div class="progress-bar progress-bar-info" style="width: 45%;">45%</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-header">Quota Summary</div>
+        <div class="card-body">
+          <div class="flex" style="justify-content: space-between;">
+            <span>Tokens</span>
+            <span><strong>34,000</strong> / 50,000</span>
+          </div>
+          <div class="progress mt-sm mb-md" style="height:18px;">
+            <div class="progress-bar progress-bar-warning" style="width: 68%;">68%</div>
+          </div>
+          <div class="flex" style="justify-content: space-between;">
+            <span>API Calls</span>
+            <span><strong>78</strong> / 200</span>
+          </div>
+          <div class="progress mt-sm" style="height:18px;">
+            <div class="progress-bar progress-bar-success" style="width: 39%;">39%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     CONNECTION STATUS
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="demo-section-header">
+    <h2>Connection Status Indicators</h2>
+    <p>Dependency health status with animated dots.</p>
+  </div>
+
+  <div class="grid grid-4">
+    <div class="card">
+      <div class="card-body text-center">
+        <div class="status-indicator" style="justify-content: center;">
+          <span class="status-dot status-connected"></span>
+          <span>PostgreSQL</span>
+        </div>
+        <p class="text-muted mt-sm" style="font-size:0.8rem;">Connected</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body text-center">
+        <div class="status-indicator" style="justify-content: center;">
+          <span class="status-dot status-connected"></span>
+          <span>OIDC Provider</span>
+        </div>
+        <p class="text-muted mt-sm" style="font-size:0.8rem;">Connected</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body text-center">
+        <div class="status-indicator" style="justify-content: center;">
+          <span class="status-dot status-error"></span>
+          <span>OpenSearch</span>
+        </div>
+        <p class="text-danger mt-sm" style="font-size:0.8rem;">Connection refused</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body text-center">
+        <div class="status-indicator" style="justify-content: center;">
+          <span class="status-dot status-warning"></span>
+          <span>Prometheus</span>
+        </div>
+        <p class="text-warning mt-sm" style="font-size:0.8rem;">Slow response</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     API KEY DISPLAY
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="demo-section-header">
+    <h2>API Key Display</h2>
+    <p>Masked/reveal pattern for viewing API key values.</p>
+  </div>
+
+  <div class="api-key-display mb-md" style="max-width: 600px;">
+    <span class="api-key-value" id="api-key-demo" data-real-value="gsk_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6">••••••••••••••••••••••••••••••</span>
+    <button class="api-key-toggle" id="api-key-toggle-btn">Show</button>
+  </div>
+  <p class="text-muted" style="font-size:0.85rem;">Click "Show" to reveal • "Copy" copies the real key even when masked</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     POLICY ACCEPTANCE PANEL
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="demo-section-header">
+    <h2>Policy Acceptance Panel</h2>
+    <p>Users must accept policies before using a backend profile.</p>
+  </div>
+
+  <div class="policy-panel">
+    <div class="policy-panel-header">
+      <span>📋 Production — GPT-4o Usage Policy</span>
+      <span class="badge badge-warning">Action Required</span>
+    </div>
+    <div class="policy-panel-body">
+      <div class="policy-text">
+        <p><strong>Acceptable Use Policy — Production GPT-4o Backend</strong></p>
+        <p>By accepting this policy, you agree to the following terms:</p>
+        <ul style="padding-left: var(--space-lg); list-style: disc;">
+          <li>All API requests are subject to metadata auditing including user identity, timestamps, token counts, and model selection.</li>
+          <li>Usage is subject to configured quotas. Exceeding quotas will result in temporary API key blocking.</li>
+          <li>API keys must not be shared with unauthorised users.</li>
+          <li>This backend is intended for approved business purposes only.</li>
+        </ul>
+        <p>Full content auditing is <strong>not enabled</strong> on this backend profile.</p>
+      </div>
+      <label class="form-check">
+        <input type="checkbox" class="form-check-input">
+        <span class="form-check-label">I have read and accept this policy</span>
+      </label>
+    </div>
+    <div class="policy-panel-footer">
+      <span class="text-muted" style="font-size:0.85rem;">Last updated: 2026-03-01</span>
+      <button class="btn btn-primary btn-sm" disabled>Accept Policy</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MODAL DEMO
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="demo-section-header">
+    <h2>Modal / Dialog</h2>
+    <p>Confirmation dialogs and detail views.</p>
+  </div>
+
+  <button class="btn btn-primary" id="open-modal-btn">Open Modal</button>
+
+  <div class="modal-overlay" id="demo-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modal-title">Revoke API Key</h3>
+        <button class="modal-close" id="close-modal-btn" aria-label="Close dialog">✕</button>
+      </div>
+      <div>
+        <p>Are you sure you want to revoke <strong>dev-key-1</strong>? This action will immediately invalidate the key.</p>
+        <div class="alert alert-warning mt-md">
+          <span class="alert-icon">⚠️</span>
+          <div>Any active sessions using this key will be terminated.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline btn-sm" id="cancel-modal-btn">Cancel</button>
+        <button class="btn btn-danger btn-sm">Revoke Key</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     TOOLTIPS
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="demo-section-header">
+    <h2>Tooltips</h2>
+    <p>Hover over elements to see contextual help.</p>
+  </div>
+
+  <div class="flex">
+    <div class="tooltip-wrapper">
+      <button class="btn btn-outline btn-sm">Hover me</button>
+      <span class="tooltip">This is a tooltip</span>
+    </div>
+    <div class="tooltip-wrapper">
+      <span class="badge badge-success">Active</span>
+      <span class="tooltip">Key is valid and accepting requests</span>
+    </div>
+    <div class="tooltip-wrapper">
+      <span class="badge badge-danger">Blocked</span>
+      <span class="tooltip">Quota exceeded — contact admin</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     THEME TOGGLE DEMO
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section" style="border-bottom: none;">
+  <div class="demo-section-header">
+    <h2>Theme Toggle</h2>
+    <p>Switch between light and dark modes. Preference is persisted in localStorage.</p>
+  </div>
+
+  <div class="card" style="max-width: 400px;">
+    <div class="card-body">
+      <div class="flex" style="justify-content: space-between;">
+        <span><strong>Current theme:</strong> <span id="current-theme-label">light</span></span>
+        <button id="theme-toggle-demo" class="btn btn-primary btn-sm">Toggle Theme</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     INTERACTIVE JS — Tabs, Modal, API Key reveal, Theme label
+     ═══════════════════════════════════════════════════════════════ -->
+<script>
+(function() {
+  "use strict";
+
+  // Tabs
+  document.querySelectorAll("#demo-tabs .tab").forEach(function(tab) {
+    tab.addEventListener("click", function() {
+      document.querySelectorAll("#demo-tabs .tab").forEach(function(t) { t.classList.remove("active"); });
+      document.querySelectorAll(".tab-content").forEach(function(c) { c.classList.remove("active"); });
+      tab.classList.add("active");
+      var target = document.getElementById(tab.dataset.tab);
+      if (target) target.classList.add("active");
+    });
+  });
+
+  // Modal
+  var modal = document.getElementById("demo-modal");
+  document.getElementById("open-modal-btn").addEventListener("click", function() {
+    modal.classList.add("active");
+  });
+  document.getElementById("close-modal-btn").addEventListener("click", function() {
+    modal.classList.remove("active");
+  });
+  document.getElementById("cancel-modal-btn").addEventListener("click", function() {
+    modal.classList.remove("active");
+  });
+  modal.addEventListener("click", function(e) {
+    if (e.target === modal) modal.classList.remove("active");
+  });
+
+  // API Key reveal/hide
+  var apiKeyValue = "gsk_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6";
+  var revealed = false;
+  document.getElementById("api-key-toggle-btn").addEventListener("click", function() {
+    revealed = !revealed;
+    document.getElementById("api-key-demo").textContent = revealed ? apiKeyValue : "••••••••••••••••••••••••••••••";
+    this.textContent = revealed ? "Hide" : "Show";
+  });
+
+  // Theme label update
+  function updateThemeLabel() {
+    var label = document.getElementById("current-theme-label");
+    if (label) {
+      label.textContent = document.documentElement.getAttribute("data-theme") || "light";
+    }
+  }
+  // Observe theme changes
+  var observer = new MutationObserver(updateThemeLabel);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  document.addEventListener("DOMContentLoaded", updateThemeLabel);
+
+  // Theme toggle demo button
+  document.getElementById("theme-toggle-demo").addEventListener("click", function() {
+    var themeToggle = document.getElementById("theme-toggle");
+    if (themeToggle) themeToggle.click();
+  });
+
+  // Policy checkbox enables accept button
+  var policyCheckbox = document.querySelector(".policy-panel .form-check-input");
+  var acceptBtn = document.querySelector(".policy-panel-footer .btn-primary");
+  if (policyCheckbox && acceptBtn) {
+    policyCheckbox.addEventListener("change", function() {
+      acceptBtn.disabled = !this.checked;
+    });
+  }
+})();
+</script>
+
+{% endblock %}

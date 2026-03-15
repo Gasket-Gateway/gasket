@@ -1,0 +1,51 @@
+# Gasket Gateway Configuration
+# See docs/docs/requirements.md for full spec
+
+server:
+  host: "0.0.0.0"
+  port: 5000
+  metrics_port: 9050
+  debug: false
+
+# Default UI theme: "light" or "dark"
+default_theme: "dark"
+
+# Portal banner (leave empty to disable)
+banner:
+  enabled: false
+  content: ""
+  colour: "#ff6600"
+
+# OIDC Authentication
+oidc:
+  provider_url: "https://authentik.gasket-dev.local/application/o/gasket-gateway/"
+  client_id: ""
+  client_secret: ""
+  # Set to true to skip TLS verification for the OIDC provider
+  skip_tls_verify: false
+  session_timeout_hours: 8
+  logout_url: "https://authentik.gasket-dev.local/application/o/gasket-gateway/end-session/"
+  groups:
+    user_access: "gasket-users"
+    admin_access: "gasket-admins"
+
+# PostgreSQL
+database:
+  host: "postgres"
+  port: 5432
+  name: "gasket"
+  user: "gasket"
+  password: "gasket-dev-password"
+
+# Prometheus
+prometheus:
+  url: "http://prometheus.gasket-dev.local:9090"
+  skip_tls_verify: false
+
+# OpenSearch
+opensearch:
+  url: "http://opensearch.gasket-dev.local:9200"
+  skip_tls_verify: false
+
+# Backend Profiles (placeholder)
+backend_profiles: []

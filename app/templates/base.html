@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ default_theme }}" data-default-theme="{{ default_theme }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Gasket Gateway — Authenticated proxy and portal for OpenAI-compliant backends">
+  <title>{% block title %}Gasket Gateway{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/code.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/table.js') }}" defer></script>
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  {% if banner and banner.enabled %}
+  <div class="banner" role="status" aria-live="polite" style="background: {{ banner.colour }};">
+    {{ banner.content }}
+  </div>
+  {% endif %}
+
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <a href="/" class="navbar-brand" aria-label="Gasket Gateway home">⚙ Gasket</a>
+
+    <button id="navbar-burger" class="navbar-burger" aria-label="Toggle menu" aria-expanded="false" aria-controls="navbar-menu">☰</button>
+
+    <ul id="navbar-menu" class="navbar-nav" role="menubar">
+      <li role="none"><a href="/" role="menuitem" class="{% if request.path == '/' %}active{% endif %}" {% if request.path == '/' %}aria-current="page"{% endif %}>Portal</a></li>
+      <li role="none"><a href="/ui-demo" role="menuitem" class="{% if request.path == '/ui-demo' %}active{% endif %}" {% if request.path == '/ui-demo' %}aria-current="page"{% endif %}>UI Demo</a></li>
+      <li role="none" class="navbar-utils">
+        <button id="width-toggle" class="btn-width-toggle" aria-label="Toggle full-width layout" aria-pressed="false" title="Expand to full width">⛶</button>
+        <button id="theme-toggle" class="btn-theme-toggle" aria-label="Toggle theme">🌙</button>
+      </li>
+    </ul>
+  </nav>
+
+  <main id="main-content" class="container" role="main" style="padding-top: var(--space-xl); padding-bottom: var(--space-2xl);">
+    {% block content %}{% endblock %}
+  </main>
+
+  <script>
+  (function() {
+    // Full-width toggle
+    var widthBtn = document.getElementById("width-toggle");
+    var main = document.getElementById("main-content");
+    if (widthBtn && main) {
+      widthBtn.addEventListener("click", function() {
+        main.classList.toggle("container-full");
+        var isExpanded = main.classList.contains("container-full");
+        widthBtn.setAttribute("aria-pressed", isExpanded ? "true" : "false");
+        widthBtn.classList.toggle("active", isExpanded);
+      });
+    }
+
+    // Burger menu toggle
+    var burger = document.getElementById("navbar-burger");
+    var menu = document.getElementById("navbar-menu");
+    if (burger && menu) {
+      burger.addEventListener("click", function() {
+        var isOpen = menu.classList.toggle("open");
+        burger.setAttribute("aria-expanded", isOpen ? "true" : "false");
+        burger.textContent = isOpen ? "✕" : "☰";
+      });
+    }
+  })();
+  </script>
+</body>
+</html>

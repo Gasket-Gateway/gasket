@@ -1,0 +1,36 @@
+# Gasket Gateway — Development (single instance, Flask dev server)
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: gasket-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gasket
+      POSTGRES_USER: gasket
+      POSTGRES_PASSWORD: gasket-dev-password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  gasket:
+    build: .
+    image: gasket:dev
+    container_name: gasket-dev
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    ports:
+      - "5000:5000"
+      - "9050:9050"
+    volumes:
+      - ./config.yaml:/etc/gasket/config.yaml:ro
+      - ./app:/app/app:ro
+    environment:
+      GASKET_INSTANCE: "1"
+      FLASK_DEBUG: "1"
+    command: ["python", "-m", "app.main"]
+
+volumes:
+  pgdata:
+    driver: local
