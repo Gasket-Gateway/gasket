@@ -5,3 +5,4 @@ psycopg2-binary==2.9.*
 prometheus-client==0.21.*
 authlib==1.4.*
 requests==2.32.*
+alembic==1.15.*

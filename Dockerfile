@@ -17,6 +17,8 @@ COPY --from=builder /install /usr/local
 
 WORKDIR /app
 COPY app/ ./app/
+COPY migrations/ ./migrations/
+COPY alembic.ini ./alembic.ini
 
 # Default config location — mount your own config.yaml here
 COPY config.yaml /etc/gasket/config.yaml

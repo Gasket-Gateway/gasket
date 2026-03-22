@@ -22,6 +22,11 @@ def create_app(config_path=None):
     app_config = load_config(config_path)
     app.config["GASKET"] = app_config
 
+    # Run database migrations on startup
+    from .db import run_migrations
+
+    run_migrations()
+
     # Initialise OIDC authentication
     from .auth import init_oidc, auth_bp
 
