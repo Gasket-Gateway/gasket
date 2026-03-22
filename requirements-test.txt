@@ -1,0 +1,4 @@
+pytest>=8.0
+selenium>=4.20
+requests>=2.32
+pytest-html>=4.0

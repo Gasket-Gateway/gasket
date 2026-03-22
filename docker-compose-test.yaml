@@ -1,0 +1,41 @@
+# Gasket Gateway — Test mode override
+# Usage: docker compose -f docker-compose-dev.yaml -f docker-compose-test.yaml up -d
+services:
+  gasket:
+    environment:
+      GASKET_TEST_MODE: "1"
+
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    image: gasket-tests:dev
+    container_name: gasket-test-runner
+    depends_on:
+      - gasket
+    environment:
+      GASKET_URL: "http://gasket:5000"
+      OIDC_TOKEN_URL: "https://authentik.gasket-dev.local/application/o/token/"
+      OIDC_CLIENT_ID: "gg-client-id"
+      OIDC_CLIENT_SECRET: "gg-client-secret"
+      PYTHONWARNINGS: "ignore:Unverified HTTPS request"
+      TEST_RESULTS_DIR: "/results"
+    volumes:
+      - ./test-results:/results
+      - ./logs:/logs:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "portal.gasket-dev.local:host-gateway"
+      - "traefik.gasket-dev.local:host-gateway"
+      - "authentik.gasket-dev.local:host-gateway"
+      - "opensearch.gasket-dev.local:host-gateway"
+      - "opensearch-dashboard.gasket-dev.local:host-gateway"
+      - "prometheus.gasket-dev.local:host-gateway"
+      - "grafana.gasket-dev.local:host-gateway"
+      - "open-webui.gasket-dev.local:host-gateway"
+      - "ollama-external.gasket-dev.local:host-gateway"
+      - "ollama-internal.gasket-dev.local:host-gateway"
+      - "traefik-metrics.gasket-dev.local:host-gateway"
+      - "authentik-metrics.gasket-dev.local:host-gateway"
+      - "api.gasket-dev.local:host-gateway"
+      - "metrics.gasket-dev.local:host-gateway"

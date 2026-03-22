@@ -26,6 +26,7 @@ services:
     volumes:
       - ./config.yaml:/etc/gasket/config.yaml:ro
       - ./app:/app/app:ro
+      - ./logs:/app/logs
     environment:
       GASKET_INSTANCE: "1"
       FLASK_DEBUG: "1"
@@ -45,7 +46,14 @@ services:
       - "authentik-metrics.gasket-dev.local:host-gateway"
       - "api.gasket-dev.local:host-gateway"
       - "metrics.gasket-dev.local:host-gateway"
-    command: ["python", "-m", "app.main"]
+    command:
+      - gunicorn
+      - --bind=0.0.0.0:5000
+      - --workers=1
+      - --reload
+      - --access-logfile=/app/logs/access.log
+      - --error-logfile=/app/logs/error.log
+      - "app.main:app"
 
 volumes:
   pgdata:

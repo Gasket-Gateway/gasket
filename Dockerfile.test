@@ -1,0 +1,23 @@
+# Test runner image — Chromium headless + pytest + selenium
+FROM python:3.12-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    chromium chromium-driver \
+    && rm -rf /var/lib/apt/lists/*
+
+# Tell Selenium where to find Chromium
+ENV CHROME_BIN=/usr/bin/chromium
+ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
+
+WORKDIR /tests
+
+COPY requirements-test.txt .
+RUN pip install --no-cache-dir -r requirements-test.txt
+
+COPY tests/ ./tests/
+
+# Suppress urllib3 InsecureRequestWarning noise
+ENV PYTHONWARNINGS="ignore:Unverified HTTPS request"
+
+# Default: run general tests (OIDC tests use a different command)
+CMD ["python", "-m", "pytest", "tests/", "--ignore=tests/oidc/", "-v", "--tb=short"]

@@ -1,7 +1,10 @@
 """Gasket Gateway — Flask application factory."""
 
+import logging
 import os
 import threading
+import time
+from logging.handlers import RotatingFileHandler
 
 from flask import Flask, session
 
@@ -22,17 +25,64 @@ def create_app(config_path=None):
     app_config = load_config(config_path)
     app.config["GASKET"] = app_config
 
+    # Configure file logging if the logs directory exists
+    log_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs")
+    if os.path.isdir(log_dir):
+        file_handler = RotatingFileHandler(
+            os.path.join(log_dir, "gasket.log"),
+            maxBytes=5 * 1024 * 1024,
+            backupCount=3,
+        )
+        file_handler.setFormatter(logging.Formatter(
+            "%(asctime)s %(levelname)s [%(name)s] %(message)s"
+        ))
+        file_handler.setLevel(logging.INFO)
+        app.logger.addHandler(file_handler)
+        app.logger.setLevel(logging.INFO)
+
+        # Also send werkzeug (Flask request) logs to the file
+        logging.getLogger("werkzeug").addHandler(file_handler)
+
+        # Log each request with method, path, status, and duration
+        @app.before_request
+        def _log_request_start():
+            from flask import g, request as req
+            g._request_start = time.time()
+
+        @app.after_request
+        def _log_request(response):
+            from flask import g, request as req
+            duration = (time.time() - getattr(g, "_request_start", time.time())) * 1000
+            app.logger.info(
+                "%s %s %s (%.1fms)",
+                req.method, req.path, response.status_code, duration,
+            )
+            return response
+
     # Run database migrations on startup
     from .db import run_migrations
 
     run_migrations()
 
-    # Initialise OIDC authentication
-    from .auth import init_oidc, auth_bp
+    # Test mode — bypass OIDC and inject a mock admin session
+    if os.environ.get("GASKET_TEST_MODE"):
+        app.secret_key = "test-secret-key"
 
-    init_oidc(app)
+        @app.before_request
+        def inject_test_session():
+            if "user_email" not in session:
+                session["user_email"] = "user3@localhost"
+                session["user_name"] = "user3"
+                session["user_groups"] = ["gasket-users", "gasket-admins"]
+                session["login_time"] = time.time()
+    else:
+        # Initialise OIDC authentication
+        from .auth import init_oidc
 
-    # Register blueprints
+        init_oidc(app)
+
+    # Register blueprints (auth_bp is always needed for route definitions)
+    from .auth import auth_bp
     from .routes.health import health_bp
     from .routes.portal import portal_bp
     from .routes.admin import admin_bp
