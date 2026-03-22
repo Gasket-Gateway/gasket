@@ -392,6 +392,41 @@ tabAutocompleteModel:
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════
+     PORTAL BANNERS
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="demo-section-header">
+    <h2>Portal Banners</h2>
+    <p>Full-width banners displayed above the navbar. Configured via <code>banners</code> list in <code>config.yaml</code>. Content supports HTML markup.</p>
+  </div>
+
+  <div style="border: var(--border-width) solid var(--border-color); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-md);">
+    <div class="banner banner-info">ℹ️ Welcome to the <b>Gasket Gateway</b> development environment.</div>
+    <div class="banner banner-success">✅ All systems <b>operational</b>. Last health check passed at 14:30 UTC.</div>
+    <div class="banner banner-warning">⚠️ Scheduled maintenance on <b>Saturday 22 Mar</b> from 02:00–04:00 UTC.</div>
+    <div class="banner banner-error">🚫 OpenSearch is <b>unreachable</b>. Audit logging is temporarily disabled.</div>
+  </div>
+
+  <pre role="group" aria-label="Config example" class="mt-md"><code class="language-yaml"># config.yaml — 4 position options for banners
+banners:
+  - type: info
+    content: "ℹ️ Welcome to &lt;b&gt;Gasket Gateway&lt;/b&gt;."
+    position: above_navbar    # sticks with the navbar
+
+  - type: warning
+    content: "⚠️ Maintenance window &lt;b&gt;Saturday 02:00–04:00 UTC&lt;/b&gt;."
+    position: below_navbar    # scrolls away with page
+
+  - type: success
+    content: "✅ v2.1.0 deployed successfully."
+    position: footer           # bottom of page, scroll to see
+
+  - type: error
+    content: "🚫 OpenSearch is &lt;b&gt;unreachable&lt;/b&gt;."
+    position: permanent_footer # always visible at bottom</code></pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
      BADGES
      ═══════════════════════════════════════════════════════════════ -->
 <div class="section">

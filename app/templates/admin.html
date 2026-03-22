@@ -1,0 +1,418 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Panel — Gasket Gateway{% endblock %}
+
+{% block content %}
+<div class="flex" style="align-items: center; margin-bottom: var(--space-lg);">
+  <h1 class="page-title page-title-danger" style="margin-bottom: 0;">Admin Panel</h1>
+</div>
+
+<div class="admin-layout" style="display: flex; border: var(--border-width) solid var(--border-color); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-md); min-height: 500px;">
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">System</div>
+      <a href="#" class="sidebar-link active" data-page="page-status">⚡ Connection Status</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Management</div>
+      <a href="#" class="sidebar-link" data-page="page-backends">🔌 OpenAI Backends</a>
+      <a href="#" class="sidebar-link" data-page="page-profiles">📂 Backend Profiles</a>
+      <a href="#" class="sidebar-link" data-page="page-keys">🔑 API Keys</a>
+      <a href="#" class="sidebar-link" data-page="page-policies">📋 Policy Records</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Monitoring</div>
+      <a href="#" class="sidebar-link" data-page="page-audit">📝 Audit Records</a>
+      <a href="#" class="sidebar-link" data-page="page-usage">📊 Usage Metrics</a>
+      <a href="#" class="sidebar-link" data-page="page-quotas">📈 Quotas</a>
+    </div>
+  </div>
+
+  <div class="admin-content" style="flex: 1; padding: var(--space-lg); overflow-y: auto;">
+
+    <!-- ═══ Connection Status Page ═══ -->
+    <div id="page-status" class="admin-page active">
+      <h2>Connection Status</h2>
+      <p>Health check status for all integrations.</p>
+
+      <div class="grid grid-4" style="margin-top: var(--space-lg);" id="connection-status">
+        <div class="card" id="status-card-postgresql" data-service="postgresql" data-service-name="PostgreSQL">
+          <div class="card-body text-center">
+            <div class="status-indicator" style="justify-content: center;">
+              <span class="status-dot status-checking"></span>
+              <span>PostgreSQL</span>
+            </div>
+            <p class="text-muted mt-sm status-detail-text" style="font-size:0.8rem;">Checking…</p>
+          </div>
+        </div>
+        <div class="card" id="status-card-oidc" data-service="oidc" data-service-name="OIDC Provider">
+          <div class="card-body text-center">
+            <div class="status-indicator" style="justify-content: center;">
+              <span class="status-dot status-checking"></span>
+              <span>OIDC Provider</span>
+            </div>
+            <p class="text-muted mt-sm status-detail-text" style="font-size:0.8rem;">Checking…</p>
+          </div>
+        </div>
+        <div class="card" id="status-card-opensearch" data-service="opensearch" data-service-name="OpenSearch">
+          <div class="card-body text-center">
+            <div class="status-indicator" style="justify-content: center;">
+              <span class="status-dot status-checking"></span>
+              <span>OpenSearch</span>
+            </div>
+            <p class="text-muted mt-sm status-detail-text" style="font-size:0.8rem;">Checking…</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="openai-backends-status" style="margin-top: var(--space-lg);"></div>
+    </div>
+
+    <!-- ═══ OpenAI Backends Page ═══ -->
+    <div id="page-backends" class="admin-page">
+      <h2>OpenAI Backends</h2>
+      <p>Add, edit, and delete OpenAI-compliant backends. Config-defined backends are read-only.</p>
+      <div style="margin-top: var(--space-lg);">
+        <span class="badge badge-info">Coming Soon</span>
+      </div>
+    </div>
+
+    <!-- ═══ Backend Profiles Page ═══ -->
+    <div id="page-profiles" class="admin-page">
+      <h2>Backend Profiles</h2>
+      <p>Create, edit, and delete backend profiles with associated backends and policies.</p>
+      <div style="margin-top: var(--space-lg);">
+        <span class="badge badge-info">Coming Soon</span>
+      </div>
+    </div>
+
+    <!-- ═══ API Key Management Page ═══ -->
+    <div id="page-keys" class="admin-page">
+      <h2>API Key Management</h2>
+      <p>List all API keys across all users. View usage metrics, quotas, and block statuses. Revoke or restore keys.</p>
+      <div style="margin-top: var(--space-lg);">
+        <span class="badge badge-info">Coming Soon</span>
+      </div>
+    </div>
+
+    <!-- ═══ Policy Records Page ═══ -->
+    <div id="page-policies" class="admin-page">
+      <h2>Policy Acceptance Records</h2>
+      <p>View policy acceptance records with search and filter by Gasket user.</p>
+      <div style="margin-top: var(--space-lg);">
+        <span class="badge badge-info">Coming Soon</span>
+      </div>
+    </div>
+
+    <!-- ═══ Audit Records Page ═══ -->
+    <div id="page-audit" class="admin-page">
+      <h2>Audit Records</h2>
+      <p>Fetch and view audit records from OpenSearch. Search by user, API key, model, or time range.</p>
+      <div style="margin-top: var(--space-lg);">
+        <span class="badge badge-info">Coming Soon</span>
+      </div>
+    </div>
+
+    <!-- ═══ Usage Metrics Page ═══ -->
+    <div id="page-usage" class="admin-page">
+      <h2>Usage Metrics</h2>
+      <p>Usage metrics dashboard. Token usage, API call latency, success/failure rates, and active users.</p>
+      <div style="margin-top: var(--space-lg);">
+        <span class="badge badge-info">Coming Soon</span>
+      </div>
+    </div>
+
+    <!-- ═══ Quotas Page ═══ -->
+    <div id="page-quotas" class="admin-page">
+      <h2>Quotas</h2>
+      <p>Usage quotas dashboard including current block statuses.</p>
+      <div style="margin-top: var(--space-lg);">
+        <span class="badge badge-info">Coming Soon</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ Error Detail Modal ═══ -->
+<div class="modal-overlay" id="error-detail-modal" role="dialog" aria-modal="true" aria-labelledby="error-modal-title">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="error-modal-title">Connection Error</h3>
+      <button class="modal-close" id="error-modal-close" aria-label="Close dialog">✕</button>
+    </div>
+    <div id="error-modal-body">
+      <p id="error-modal-service" style="margin-bottom: var(--space-sm);"></p>
+      <pre><code id="error-modal-detail"></code></pre>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary btn-sm" id="error-modal-recheck">Recheck</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  "use strict";
+
+  // ─── Sidebar page navigation ───
+  var links = document.querySelectorAll('.sidebar-link[data-page]');
+  var pages = document.querySelectorAll('.admin-page');
+
+  links.forEach(function(link) {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      var targetId = link.getAttribute('data-page');
+
+      links.forEach(function(l) { l.classList.remove('active'); });
+      pages.forEach(function(p) { p.classList.remove('active'); });
+
+      link.classList.add('active');
+      var target = document.getElementById(targetId);
+      if (target) target.classList.add('active');
+    });
+  });
+
+  // ─── Error modal ───
+  var modal = document.getElementById('error-detail-modal');
+  var modalService = document.getElementById('error-modal-service');
+  var modalDetail = document.getElementById('error-modal-detail');
+  var modalTitle = document.getElementById('error-modal-title');
+  var modalRecheckBtn = document.getElementById('error-modal-recheck');
+  var currentModalServiceKey = null;
+  var currentModalServiceName = null;
+
+  function openErrorModal(serviceKey, serviceName, detail) {
+    currentModalServiceKey = serviceKey;
+    currentModalServiceName = serviceName;
+    modalTitle.textContent = serviceName + ' — Connection Error';
+    modalService.innerHTML = 'Service <strong>' + serviceName + '</strong> failed its health check.';
+    modalDetail.textContent = detail || 'Unknown error';
+    modalRecheckBtn.disabled = false;
+    modalRecheckBtn.textContent = 'Recheck';
+    modal.classList.add('active');
+  }
+
+  function closeErrorModal() {
+    modal.classList.remove('active');
+    currentModalServiceKey = null;
+    currentModalServiceName = null;
+  }
+
+  document.getElementById('error-modal-close').addEventListener('click', closeErrorModal);
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) closeErrorModal();
+  });
+
+  // Modal recheck button
+  modalRecheckBtn.addEventListener('click', function() {
+    if (!currentModalServiceKey) return;
+    recheckService(currentModalServiceKey, currentModalServiceName, true);
+  });
+
+  // ─── Helpers ───
+  function formatLatency(ms) {
+    if (ms >= 1000) return (ms / 1000).toFixed(1) + 's';
+    return ms + 'ms';
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ─── Recheck a single service ───
+  function recheckService(serviceKey, serviceName, fromModal) {
+    var cardId = 'status-card-' + serviceKey;
+    var card = document.getElementById(cardId);
+
+    // Set card to checking state
+    if (card) {
+      resetCardToChecking(card);
+    }
+
+    // Disable modal recheck button while checking
+    if (fromModal) {
+      modalRecheckBtn.disabled = true;
+      modalRecheckBtn.textContent = 'Checking…';
+    }
+
+    fetch('/admin/api/status/' + encodeURIComponent(serviceKey))
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (card) {
+          updateCard(card, serviceKey, serviceName, data.status, data.detail, data.latency_ms);
+        }
+
+        if (fromModal) {
+          if (data.status === 'connected') {
+            // Success — close the modal
+            closeErrorModal();
+          } else {
+            // Still erroring — update the modal content
+            modalDetail.textContent = data.detail || 'Unknown error';
+            modalRecheckBtn.disabled = false;
+            modalRecheckBtn.textContent = 'Recheck';
+          }
+        }
+      })
+      .catch(function() {
+        if (card) {
+          updateCard(card, serviceKey, serviceName, 'error', 'Failed to fetch status', 0);
+        }
+        if (fromModal) {
+          modalRecheckBtn.disabled = false;
+          modalRecheckBtn.textContent = 'Recheck';
+        }
+      });
+  }
+
+  // ─── Reset card to checking state ───
+  function resetCardToChecking(card) {
+    var dot = card.querySelector('.status-dot');
+    var detailText = card.querySelector('.status-detail-text');
+    var actions = card.querySelector('.status-card-actions');
+
+    if (dot) {
+      dot.className = 'status-dot status-checking';
+    }
+    if (detailText) {
+      detailText.className = 'text-muted mt-sm status-detail-text';
+      detailText.style.fontSize = '0.8rem';
+      detailText.textContent = 'Checking…';
+    }
+    if (actions) {
+      actions.remove();
+    }
+  }
+
+  // ─── Update a card with results ───
+  function updateCard(card, serviceKey, serviceName, status, detail, latencyMs) {
+    var dot = card.querySelector('.status-dot');
+    var detailText = card.querySelector('.status-detail-text');
+
+    if (dot) {
+      dot.className = 'status-dot';
+      dot.classList.add(status === 'connected' ? 'status-connected' : 'status-error');
+    }
+
+    if (detailText) {
+      detailText.classList.remove('text-muted', 'text-danger');
+      if (status === 'connected') {
+        detailText.classList.add('text-muted');
+        detailText.textContent = formatLatency(latencyMs);
+      } else {
+        detailText.classList.add('text-danger');
+        detailText.textContent = 'Error — ' + formatLatency(latencyMs);
+      }
+    }
+
+    // Remove old action buttons
+    var oldActions = card.querySelector('.status-card-actions');
+    if (oldActions) oldActions.remove();
+
+    // Add action buttons
+    var cardBody = card.querySelector('.card-body');
+    var actionsDiv = document.createElement('div');
+    actionsDiv.className = 'status-card-actions mt-sm';
+    actionsDiv.style.display = 'flex';
+    actionsDiv.style.gap = 'var(--space-xs)';
+    actionsDiv.style.justifyContent = 'center';
+
+    // Recheck button (always)
+    var recheckBtn = document.createElement('button');
+    recheckBtn.className = 'btn btn-outline btn-sm';
+    recheckBtn.textContent = '↻ Recheck';
+    recheckBtn.style.fontSize = '0.7rem';
+    recheckBtn.addEventListener('click', function() {
+      recheckService(serviceKey, serviceName, false);
+    });
+    actionsDiv.appendChild(recheckBtn);
+
+    // View Error button (only on error)
+    if (status !== 'connected') {
+      var errorBtn = document.createElement('button');
+      errorBtn.className = 'btn btn-danger btn-sm';
+      errorBtn.textContent = 'View Error';
+      errorBtn.style.fontSize = '0.7rem';
+      errorBtn.addEventListener('click', function() {
+        openErrorModal(serviceKey, serviceName, detail);
+      });
+      actionsDiv.appendChild(errorBtn);
+    }
+
+    cardBody.appendChild(actionsDiv);
+  }
+
+  // ─── Create a backend card ───
+  function createBackendCard(backend) {
+    var card = document.createElement('div');
+    card.className = 'card';
+    card.id = 'status-card-' + backend.name;
+    card.setAttribute('data-service', backend.name);
+    card.setAttribute('data-service-name', backend.name);
+
+    card.innerHTML =
+      '<div class="card-body text-center">' +
+        '<div class="status-indicator" style="justify-content: center;">' +
+          '<span class="status-dot status-checking"></span>' +
+          '<span>' + escapeHtml(backend.name) + '</span>' +
+        '</div>' +
+        '<p class="text-muted mt-sm status-detail-text" style="font-size:0.8rem;">Checking…</p>' +
+      '</div>';
+
+    updateCard(card, backend.name, backend.name, backend.status, backend.detail, backend.latency_ms || 0);
+    return card;
+  }
+
+  // ─── Initial fetch ───
+  fetch('/admin/api/status')
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      var serviceNames = {
+        postgresql: 'PostgreSQL',
+        oidc: 'OIDC Provider',
+        opensearch: 'OpenSearch'
+      };
+      Object.keys(serviceNames).forEach(function(svc) {
+        if (data[svc]) {
+          var card = document.getElementById('status-card-' + svc);
+          if (card) {
+            updateCard(card, svc, serviceNames[svc], data[svc].status, data[svc].detail, data[svc].latency_ms);
+          }
+        }
+      });
+
+      // OpenAI backends
+      var container = document.getElementById('openai-backends-status');
+      if (data.openai_backends && data.openai_backends.length > 0) {
+        var heading = document.createElement('h3');
+        heading.textContent = 'OpenAI Backends';
+        heading.style.marginBottom = 'var(--space-md)';
+        container.appendChild(heading);
+
+        var grid = document.createElement('div');
+        grid.className = 'grid grid-4';
+        data.openai_backends.forEach(function(backend) {
+          grid.appendChild(createBackendCard(backend));
+        });
+        container.appendChild(grid);
+      }
+    })
+    .catch(function() {
+      var serviceNames = {
+        postgresql: 'PostgreSQL',
+        oidc: 'OIDC Provider',
+        opensearch: 'OpenSearch'
+      };
+      Object.keys(serviceNames).forEach(function(svc) {
+        var card = document.getElementById('status-card-' + svc);
+        if (card) {
+          updateCard(card, svc, serviceNames[svc], 'error', 'Failed to fetch status from /admin/api/status', 0);
+        }
+      });
+    });
+})();
+</script>
+{% endblock %}

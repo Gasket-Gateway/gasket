@@ -12,11 +12,7 @@ DEFAULTS = {
         "debug": False,
     },
     "default_theme": "dark",
-    "banner": {
-        "enabled": False,
-        "content": "",
-        "colour": "#ff6600",
-    },
+    "banners": [],
     "oidc": {
         "provider_url": "",
         "client_id": "",
@@ -36,15 +32,12 @@ DEFAULTS = {
         "user": "gasket",
         "password": "",
     },
-    "prometheus": {
-        "url": "http://localhost:9090",
-        "skip_tls_verify": False,
-    },
     "opensearch": {
         "url": "http://localhost:9200",
         "skip_tls_verify": False,
     },
     "backend_profiles": [],
+    "openai_backends": [],
 }
 
 

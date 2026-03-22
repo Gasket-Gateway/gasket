@@ -3,7 +3,7 @@
 import os
 import threading
 
-from flask import Flask
+from flask import Flask, session
 
 from .config import load_config
 
@@ -22,11 +22,21 @@ def create_app(config_path=None):
     app_config = load_config(config_path)
     app.config["GASKET"] = app_config
 
+    # Initialise OIDC authentication
+    from .auth import init_oidc, auth_bp
+
+    init_oidc(app)
+
     # Register blueprints
     from .routes.health import health_bp
+    from .routes.portal import portal_bp
+    from .routes.admin import admin_bp
     from .routes.ui_demo import ui_demo_bp
     from .routes.errors import errors_bp
 
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(portal_bp)
+    app.register_blueprint(admin_bp)
     app.register_blueprint(health_bp)
     app.register_blueprint(ui_demo_bp)
     app.register_blueprint(errors_bp)
@@ -34,10 +44,17 @@ def create_app(config_path=None):
     # Inject template context
     @app.context_processor
     def inject_gasket_config():
+        admin_group = (
+            app_config.get("oidc", {})
+            .get("groups", {})
+            .get("admin_access", "gasket-admins")
+        )
+        user_groups = session.get("user_groups", [])
         return {
             "gasket_config": app_config,
             "default_theme": app_config.get("default_theme", "light"),
-            "banner": app_config.get("banner", {}),
+            "banners": app_config.get("banners", []),
+            "is_admin": admin_group in user_groups,
         }
 
     return app

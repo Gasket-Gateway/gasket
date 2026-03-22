@@ -10,20 +10,32 @@ server:
 # Default UI theme: "light" or "dark"
 default_theme: "dark"
 
-# Portal banner (leave empty to disable)
-banner:
-  enabled: false
-  content: ""
-  colour: "#ff6600"
+# Portal banners — position controls where the banner appears
+# Options: above_navbar, below_navbar, footer, permanent_footer
+banners: []
+  # - type: info
+  #   content: "ℹ️ Welcome to the <b>Gasket Gateway</b> development environment."
+  #   position: above_navbar
+  # - type: warning
+  #   content: "⚠️ This is an example banner that will hide when scrolling."
+  #   position: below_navbar
+  # - type: info
+  #   content: "Made with ❤️ by <b>Gasket</b> project team."
+  #   position: permanent_footer
+  # - type: warning
+  #   content: "⚠️ This is an example footer."
+  #   position: footer
 
 # OIDC Authentication
 oidc:
   provider_url: "https://authentik.gasket-dev.local/application/o/gasket-gateway/"
-  client_id: ""
-  client_secret: ""
+  client_id: "gg-client-id"
+  client_secret: "gg-client-secret"
   # Set to true to skip TLS verification for the OIDC provider
-  skip_tls_verify: false
+  skip_tls_verify: true
   session_timeout_hours: 8
+  # External callback URL registered with the OIDC provider
+  redirect_url: "https://portal.gasket-dev.local/auth/callback"
   logout_url: "https://authentik.gasket-dev.local/application/o/gasket-gateway/end-session/"
   groups:
     user_access: "gasket-users"
@@ -37,15 +49,10 @@ database:
   user: "gasket"
   password: "gasket-dev-password"
 
-# Prometheus
-prometheus:
-  url: "http://prometheus.gasket-dev.local:9090"
-  skip_tls_verify: false
-
 # OpenSearch
 opensearch:
-  url: "http://opensearch.gasket-dev.local:9200"
-  skip_tls_verify: false
+  url: "https://opensearch.gasket-dev.local"
+  skip_tls_verify: true
 
 # Backend Profiles (placeholder)
 backend_profiles: []

@@ -9,37 +9,115 @@
   <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
   <script src="{{ url_for('static', filename='js/code.js') }}" defer></script>
   <script src="{{ url_for('static', filename='js/table.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/user.js') }}" defer></script>
 </head>
 <body>
   <a href="#main-content" class="skip-link">Skip to main content</a>
 
-  {% if banner and banner.enabled %}
-  <div class="banner" role="status" aria-live="polite" style="background: {{ banner.colour }};">
-    {{ banner.content }}
-  </div>
+  {# Determine current viewer role for banner visibility filtering #}
+  {% set viewer_role = 'anonymous' %}
+  {% if session.get('user_email') %}
+    {% set viewer_role = 'admin' if is_admin else 'user' %}
   {% endif %}
 
-  <nav class="navbar" role="navigation" aria-label="Main navigation">
-    <a href="/" class="navbar-brand" aria-label="Gasket Gateway home">
-      <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Gasket" height="36" class="logo-light">
-      <img src="{{ url_for('static', filename='img/logo-dark.svg') }}" alt="Gasket" height="36" class="logo-dark">
-    </a>
+  <header class="site-header">
+    {% for banner in banners %}
+    {% set vis = banner.visibility | default(none) %}
+    {% if banner.position | default('above_navbar') == 'above_navbar' %}
+    {% if not vis or viewer_role in vis or (viewer_role == 'admin' and 'user' in vis) %}
+    <div class="banner banner-{{ banner.type | default('info') }}" role="status" aria-live="polite">
+      {{ banner.content | safe }}
+    </div>
+    {% endif %}
+    {% endif %}
+    {% endfor %}
 
-    <button id="navbar-burger" class="navbar-burger" aria-label="Toggle menu" aria-expanded="false" aria-controls="navbar-menu">☰</button>
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+      <a href="/" class="navbar-brand" aria-label="Gasket Gateway home">
+        <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Gasket" height="36" class="logo-light">
+        <img src="{{ url_for('static', filename='img/logo-dark.svg') }}" alt="Gasket" height="36" class="logo-dark">
+      </a>
 
-    <ul id="navbar-menu" class="navbar-nav" role="menubar">
-      <li role="none"><a href="/" role="menuitem" class="{% if request.path == '/' %}active{% endif %}" {% if request.path == '/' %}aria-current="page"{% endif %}>Portal</a></li>
-      <li role="none"><a href="/ui-demo" role="menuitem" class="{% if request.path == '/ui-demo' %}active{% endif %}" {% if request.path == '/ui-demo' %}aria-current="page"{% endif %}>UI Demo</a></li>
-      <li role="none" class="navbar-utils">
-        <button id="width-toggle" class="btn-width-toggle" aria-label="Toggle full-width layout" aria-pressed="false" title="Expand to full width">⛶</button>
-        <button id="theme-toggle" class="btn-theme-toggle" aria-label="Toggle theme">🌙</button>
-      </li>
-    </ul>
-  </nav>
+      <button id="navbar-burger" class="navbar-burger" aria-label="Toggle menu" aria-expanded="false" aria-controls="navbar-menu">☰</button>
+
+      <ul id="navbar-menu" class="navbar-nav" role="menubar">
+        {% if session.get('user_email') %}
+        <li role="none"><a href="/" role="menuitem" class="{% if request.path == '/' %}active{% endif %}" {% if request.path == '/' %}aria-current="page"{% endif %}>Portal</a></li>
+        {% if is_admin %}
+        <li role="none"><a href="/admin" role="menuitem" class="nav-admin {% if request.path == '/admin' %}active{% endif %}" {% if request.path == '/admin' %}aria-current="page"{% endif %}>Admin</a></li>
+        {% endif %}
+        {% endif %}
+        <li role="none" class="navbar-utils">
+          <button id="width-toggle" class="btn-width-toggle" aria-label="Toggle full-width layout" aria-pressed="false" title="Expand to full width">⛶</button>
+          <button id="theme-toggle" class="btn-theme-toggle" aria-label="Toggle theme">🌙</button>
+          {% if session.get('user_email') %}
+          <div class="user-menu-wrapper">
+            <button id="user-menu-toggle" class="btn-user-toggle" aria-label="User menu" aria-expanded="false" aria-controls="user-dropdown" title="{{ session.get('user_email') }}">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </button>
+            <div id="user-dropdown" class="user-dropdown" role="menu" aria-label="User information">
+              <div class="user-dropdown-header">
+                <div class="user-dropdown-name">{{ session.get('user_name', 'User') }}</div>
+                <div class="user-dropdown-email">{{ session.get('user_email') }}</div>
+              </div>
+              <div class="user-dropdown-section">
+                <div class="user-dropdown-label">Groups</div>
+                <ul class="user-dropdown-groups">
+                  {% for group in session.get('user_groups', []) %}
+                  <li>{{ group }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+              <div class="user-dropdown-footer">
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-danger btn-sm user-logout-btn" role="menuitem" id="logout-btn">Logout</a>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        </li>
+      </ul>
+    </nav>
+  </header>
+
+  {% for banner in banners %}
+  {% set vis = banner.visibility | default(none) %}
+  {% if banner.position == 'below_navbar' %}
+  {% if not vis or viewer_role in vis or (viewer_role == 'admin' and 'user' in vis) %}
+  <div class="banner banner-{{ banner.type | default('info') }}" role="status" aria-live="polite">
+    {{ banner.content | safe }}
+  </div>
+  {% endif %}
+  {% endif %}
+  {% endfor %}
 
   <main id="main-content" class="container" role="main" style="padding-top: var(--space-xl); padding-bottom: var(--space-2xl);">
     {% block content %}{% endblock %}
   </main>
+
+  {% for banner in banners %}
+  {% set vis = banner.visibility | default(none) %}
+  {% if banner.position == 'footer' %}
+  {% if not vis or viewer_role in vis or (viewer_role == 'admin' and 'user' in vis) %}
+  <div class="banner banner-{{ banner.type | default('info') }} banner-footer" role="status" aria-live="polite">
+    {{ banner.content | safe }}
+  </div>
+  {% endif %}
+  {% endif %}
+  {% endfor %}
+
+  {% for banner in banners %}
+  {% set vis = banner.visibility | default(none) %}
+  {% if banner.position == 'permanent_footer' %}
+  {% if not vis or viewer_role in vis or (viewer_role == 'admin' and 'user' in vis) %}
+  <div class="banner banner-{{ banner.type | default('info') }} banner-permanent-footer" role="status" aria-live="polite">
+    {{ banner.content | safe }}
+  </div>
+  {% endif %}
+  {% endif %}
+  {% endfor %}
 
   <script>
   (function() {
@@ -64,6 +142,14 @@
         burger.setAttribute("aria-expanded", isOpen ? "true" : "false");
         burger.textContent = isOpen ? "✕" : "☰";
       });
+    }
+
+    // Add bottom padding for permanent footer banners
+    var permFooters = document.querySelectorAll(".banner-permanent-footer");
+    if (permFooters.length) {
+      var totalHeight = 0;
+      permFooters.forEach(function(b) { totalHeight += b.offsetHeight; });
+      document.body.style.paddingBottom = totalHeight + "px";
     }
   })();
   </script>

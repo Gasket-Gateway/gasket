@@ -29,6 +29,22 @@ services:
     environment:
       GASKET_INSTANCE: "1"
       FLASK_DEBUG: "1"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "portal.gasket-dev.local:host-gateway"
+      - "traefik.gasket-dev.local:host-gateway"
+      - "authentik.gasket-dev.local:host-gateway"
+      - "opensearch.gasket-dev.local:host-gateway"
+      - "opensearch-dashboard.gasket-dev.local:host-gateway"
+      - "prometheus.gasket-dev.local:host-gateway"
+      - "grafana.gasket-dev.local:host-gateway"
+      - "open-webui.gasket-dev.local:host-gateway"
+      - "ollama-external.gasket-dev.local:host-gateway"
+      - "ollama-internal.gasket-dev.local:host-gateway"
+      - "traefik-metrics.gasket-dev.local:host-gateway"
+      - "authentik-metrics.gasket-dev.local:host-gateway"
+      - "api.gasket-dev.local:host-gateway"
+      - "metrics.gasket-dev.local:host-gateway"
     command: ["python", "-m", "app.main"]
 
 volumes:

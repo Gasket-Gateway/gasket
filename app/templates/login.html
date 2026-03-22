@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In — Gasket Gateway{% endblock %}
+
+{% block content %}
+<div class="login-wrapper">
+  <div class="login-card card">
+    <div class="login-logo">
+      <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Gasket" height="48" class="logo-light">
+      <img src="{{ url_for('static', filename='img/logo-dark.svg') }}" alt="Gasket" height="48" class="logo-dark">
+    </div>
+
+    <p class="login-subtitle">AI Inference Gateway</p>
+
+    {% if access_denied %}
+    <div class="alert alert-danger" role="alert">
+      <strong>Access Denied</strong> — Your account is not authorised to access the Gasket Gateway portal. Contact your administrator if you believe this is an error.
+    </div>
+    {% endif %}
+
+    <a href="{{ url_for('auth.login') }}" class="btn btn-outline btn-lg login-sso-btn" id="sso-login-btn">
+      Sign in with SSO
+    </a>
+  </div>
+</div>
+{% endblock %}

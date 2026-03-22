@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Portal — Gasket Gateway{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Portal</h1>
+<p>Welcome, <strong>{{ session.get('user_name', 'User') }}</strong>. This is the main portal for managing your AI backend access.</p>
+
+<div class="grid grid-3" style="margin-top: var(--space-xl);">
+  <div class="card card-accent-blue">
+    <div class="card-header">Backend Profiles</div>
+    <div class="card-body">
+      <p>View and accept policies for your available backend profiles. Manage connections to OpenAI-compliant backends.</p>
+    </div>
+    <div class="card-footer">
+      <span class="badge badge-info">Coming Soon</span>
+    </div>
+  </div>
+
+  <div class="card card-accent-purple">
+    <div class="card-header">API Keys</div>
+    <div class="card-body">
+      <p>Create, view, and manage your API keys. Configure VSCode Continue integration and Open WebUI header support.</p>
+    </div>
+    <div class="card-footer">
+      <span class="badge badge-info">Coming Soon</span>
+    </div>
+  </div>
+
+  <div class="card card-accent-green">
+    <div class="card-header">Usage & Quotas</div>
+    <div class="card-body">
+      <p>Monitor your token usage, API call metrics, and quota consumption across all your backend profiles.</p>
+    </div>
+    <div class="card-footer">
+      <span class="badge badge-info">Coming Soon</span>
+    </div>
+  </div>
+</div>
+{% endblock %}
