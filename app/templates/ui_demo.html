@@ -405,6 +405,7 @@ tabAutocompleteModel:
     <div class="banner banner-success">✅ All systems <b>operational</b>. Last health check passed at 14:30 UTC.</div>
     <div class="banner banner-warning">⚠️ Scheduled maintenance on <b>Saturday 22 Mar</b> from 02:00–04:00 UTC.</div>
     <div class="banner banner-error">🚫 OpenSearch is <b>unreachable</b>. Audit logging is temporarily disabled.</div>
+    <div class="banner banner-outline">This is an <b>outline</b> banner — a simple neutral style that follows the current theme.</div>
   </div>
 
   <pre role="group" aria-label="Config example" class="mt-md"><code class="language-yaml"># config.yaml — 4 position options for banners
@@ -423,7 +424,11 @@ banners:
 
   - type: error
     content: "🚫 OpenSearch is &lt;b&gt;unreachable&lt;/b&gt;."
-    position: permanent_footer # always visible at bottom</code></pre>
+    position: permanent_footer # always visible at bottom
+
+  - type: outline
+    content: "A simple neutral banner."
+    position: below_navbar</code></pre>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════

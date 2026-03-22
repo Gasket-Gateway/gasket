@@ -855,6 +855,7 @@ mark {
 .banner-success { background: color-mix(in srgb, var(--color-success) 15%, var(--bg-secondary)); }
 .banner-warning { background: color-mix(in srgb, var(--color-warning) 20%, var(--bg-secondary)); }
 .banner-error   { background: color-mix(in srgb, var(--color-danger) 15%, var(--bg-secondary)); }
+.banner-outline { background: var(--bg-primary); }
 
 .banner-footer {
   border-bottom: none;
