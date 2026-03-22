@@ -52,7 +52,7 @@ database:
 # OpenSearch
 opensearch:
   url: "https://opensearch.gasket-dev.local"
-  skip_tls_verify: true
+  skip_tls_verify: false
 
 # Backend Profiles (placeholder)
 backend_profiles: []

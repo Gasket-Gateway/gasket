@@ -139,14 +139,24 @@
   <div class="modal">
     <div class="modal-header">
       <h3 id="error-modal-title">Connection Error</h3>
-      <button class="modal-close" id="error-modal-close" aria-label="Close dialog">✕</button>
+      <div style="display: flex; gap: var(--space-xs);">
+        <button class="modal-expand" id="error-modal-expand" aria-label="Toggle fullscreen">⛶</button>
+        <button class="modal-close" id="error-modal-close" aria-label="Close dialog">✕</button>
+      </div>
     </div>
     <div id="error-modal-body">
       <p id="error-modal-service" style="margin-bottom: var(--space-sm);"></p>
+      <div id="error-modal-stats" style="display: flex; gap: var(--space-md); margin-bottom: var(--space-md);">
+        <div class="status-indicator">
+          <span class="status-dot status-error" id="error-modal-dot"></span>
+          <span id="error-modal-status-label">Error</span>
+        </div>
+        <span class="text-muted" style="font-size: 0.85rem;" id="error-modal-latency"></span>
+      </div>
       <pre><code id="error-modal-detail"></code></pre>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-primary btn-sm" id="error-modal-recheck">Recheck</button>
+      <button class="btn btn-outline btn-sm" id="error-modal-recheck">↻ Recheck</button>
     </div>
   </div>
 </div>
@@ -182,12 +192,14 @@
   var currentModalServiceKey = null;
   var currentModalServiceName = null;
 
-  function openErrorModal(serviceKey, serviceName, detail) {
+  function openErrorModal(serviceKey, serviceName, detail, latencyMs) {
     currentModalServiceKey = serviceKey;
     currentModalServiceName = serviceName;
     modalTitle.textContent = serviceName + ' — Connection Error';
     modalService.innerHTML = 'Service <strong>' + serviceName + '</strong> failed its health check.';
     modalDetail.textContent = detail || 'Unknown error';
+    var modalLatency = document.getElementById('error-modal-latency');
+    if (modalLatency) modalLatency.textContent = formatLatency(latencyMs || 0);
     modalRecheckBtn.disabled = false;
     modalRecheckBtn.textContent = 'Recheck';
     modal.classList.add('active');
@@ -195,6 +207,7 @@
 
   function closeErrorModal() {
     modal.classList.remove('active');
+    document.querySelector('.modal').classList.remove('modal-expanded');
     currentModalServiceKey = null;
     currentModalServiceName = null;
   }
@@ -202,6 +215,11 @@
   document.getElementById('error-modal-close').addEventListener('click', closeErrorModal);
   modal.addEventListener('click', function(e) {
     if (e.target === modal) closeErrorModal();
+  });
+
+  // Expand toggle
+  document.getElementById('error-modal-expand').addEventListener('click', function() {
+    document.querySelector('#error-detail-modal .modal').classList.toggle('modal-expanded');
   });
 
   // Modal recheck button
@@ -252,6 +270,8 @@
           } else {
             // Still erroring — update the modal content
             modalDetail.textContent = data.detail || 'Unknown error';
+            var modalLatency = document.getElementById('error-modal-latency');
+            if (modalLatency) modalLatency.textContent = formatLatency(data.latency_ms || 0);
             modalRecheckBtn.disabled = false;
             modalRecheckBtn.textContent = 'Recheck';
           }
@@ -323,7 +343,7 @@
     // Recheck button (always)
     var recheckBtn = document.createElement('button');
     recheckBtn.className = 'btn btn-outline btn-sm';
-    recheckBtn.textContent = '↻ Recheck';
+    recheckBtn.textContent = 'Recheck';
     recheckBtn.style.fontSize = '0.7rem';
     recheckBtn.addEventListener('click', function() {
       recheckService(serviceKey, serviceName, false);
@@ -337,7 +357,7 @@
       errorBtn.textContent = 'View Error';
       errorBtn.style.fontSize = '0.7rem';
       errorBtn.addEventListener('click', function() {
-        openErrorModal(serviceKey, serviceName, detail);
+        openErrorModal(serviceKey, serviceName, detail, latencyMs);
       });
       actionsDiv.appendChild(errorBtn);
     }

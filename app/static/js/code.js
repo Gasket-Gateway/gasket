@@ -10,6 +10,12 @@
 
   // ─── Copy to clipboard ──────────────────────────────────────────
   function addCopyButton(preEl) {
+    // Wrap pre in a container so the copy button stays fixed when content scrolls
+    var wrapper = document.createElement("div");
+    wrapper.className = "pre-wrapper";
+    preEl.parentNode.insertBefore(wrapper, preEl);
+    wrapper.appendChild(preEl);
+
     var btn = document.createElement("button");
     btn.className = "copy-btn";
     btn.textContent = "Copy";
@@ -29,7 +35,7 @@
         }, 2000);
       });
     });
-    preEl.appendChild(btn);
+    wrapper.appendChild(btn);
   }
 
   // ─── Syntax highlighting (bash + YAML only) ────────────────────
