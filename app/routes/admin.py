@@ -243,7 +243,14 @@ def get_profile_api(profile_id):
 @groups_required("gasket-admins")
 def update_profile_api(profile_id):
     """Update a backend profile."""
-    from ..profiles import update_profile
+    from ..profiles import get_profile, update_profile
+
+    # Guard: config-defined profiles are read-only
+    profile = get_profile(profile_id)
+    if not profile:
+        return jsonify({"error": "Profile not found"}), 404
+    if profile.source == "config":
+        return jsonify({"error": "Config-defined profiles cannot be modified"}), 403
 
     data = request.get_json(silent=True)
     if not data:
@@ -273,6 +280,8 @@ def delete_profile_api(profile_id):
     profile = get_profile(profile_id)
     if not profile:
         return jsonify({"error": "Profile not found"}), 404
+    if profile.source == "config":
+        return jsonify({"error": "Config-defined profiles cannot be deleted"}), 403
 
     delete_profile(profile_id)
 

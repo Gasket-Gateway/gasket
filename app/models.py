@@ -88,6 +88,7 @@ class BackendProfile(db.Model):
     description = db.Column(db.Text, nullable=False, server_default="")
     policy_text = db.Column(db.Text, nullable=False, server_default="")
     oidc_groups = db.Column(db.Text, nullable=False, server_default="")
+    source = db.Column(db.Text, nullable=False, server_default="admin")
 
     # Audit settings
     metadata_audit = db.Column(db.Boolean, nullable=False, server_default=db.text("true"))
@@ -134,6 +135,7 @@ class BackendProfile(db.Model):
             "description": self.description,
             "policy_text": self.policy_text,
             "oidc_groups": groups_list,
+            "source": self.source,
             "metadata_audit": self.metadata_audit,
             "content_audit": self.content_audit,
             "default_expiry_days": self.default_expiry_days,

@@ -57,11 +57,7 @@ def create_profile(data):
         raise ValueError(f"Profile with name '{name}' already exists")
 
     # Normalise oidc_groups: accept list or comma-separated string
-    oidc_groups_raw = data.get("oidc_groups", "")
-    if isinstance(oidc_groups_raw, list):
-        oidc_groups = ",".join(g.strip() for g in oidc_groups_raw if g.strip())
-    else:
-        oidc_groups = ",".join(g.strip() for g in str(oidc_groups_raw).split(",") if g.strip())
+    oidc_groups = _normalise_oidc_groups(data.get("oidc_groups", ""))
 
     profile = BackendProfile(
         name=name,
@@ -133,11 +129,7 @@ def update_profile(profile_id, data):
 
     # Handle oidc_groups separately: accept list or comma-separated string
     if "oidc_groups" in data:
-        oidc_groups_raw = data["oidc_groups"]
-        if isinstance(oidc_groups_raw, list):
-            profile.oidc_groups = ",".join(g.strip() for g in oidc_groups_raw if g.strip())
-        else:
-            profile.oidc_groups = ",".join(g.strip() for g in str(oidc_groups_raw).split(",") if g.strip())
+        profile.oidc_groups = _normalise_oidc_groups(data["oidc_groups"])
 
     # Update backend associations if provided
     if "backend_ids" in data:
@@ -175,3 +167,109 @@ def delete_profile(profile_id):
     db.session.delete(profile)
     db.session.commit()
     return True
+
+
+# ─── Helpers ───────────────────────────────────────────────────────
+
+
+def _normalise_oidc_groups(raw):
+    """Accept list or comma-separated string, return comma-separated string."""
+    if isinstance(raw, list):
+        return ",".join(g.strip() for g in raw if g.strip())
+    return ",".join(g.strip() for g in str(raw).split(",") if g.strip())
+
+
+# ─── Config seeding ───────────────────────────────────────────────
+
+
+def seed_config_profiles(app):
+    """Sync config-defined backend profiles into the database.
+
+    - Upserts profiles listed in config.yaml under backend_profiles
+    - Resolves backend associations by name (backends must already exist)
+    - Removes config-sourced DB rows whose names are no longer in config
+    - Admin-created profiles are never touched
+
+    Must be called within a Flask application context.
+    """
+    config = app.config["GASKET"]
+    config_profiles = config.get("backend_profiles", [])
+    config_names = {p.get("name") for p in config_profiles if p.get("name")}
+
+    with app.app_context():
+        # Upsert config-defined profiles
+        for entry in config_profiles:
+            name = entry.get("name")
+            if not name:
+                logger.warning("Skipping config profile with no name: %s", entry)
+                continue
+
+            existing = get_profile_by_name(name)
+
+            # Resolve backend associations by name
+            backend_names = entry.get("backends", [])
+            backends = []
+            if backend_names:
+                backends = OpenAIBackend.query.filter(
+                    OpenAIBackend.name.in_(backend_names)
+                ).all()
+                found = {b.name for b in backends}
+                missing = set(backend_names) - found
+                if missing:
+                    logger.warning(
+                        "Config profile '%s' references unknown backends: %s — skipping them",
+                        name,
+                        sorted(missing),
+                    )
+
+            oidc_groups = _normalise_oidc_groups(entry.get("oidc_groups", ""))
+
+            if existing:
+                if existing.source == "config":
+                    # Update config-sourced profile to match config
+                    existing.description = entry.get("description", existing.description)
+                    existing.policy_text = entry.get("policy_text", existing.policy_text)
+                    existing.oidc_groups = oidc_groups or existing.oidc_groups
+                    existing.metadata_audit = entry.get("metadata_audit", existing.metadata_audit)
+                    existing.content_audit = entry.get("content_audit", existing.content_audit)
+                    existing.default_expiry_days = entry.get("default_expiry_days", existing.default_expiry_days)
+                    existing.enforce_expiry = entry.get("enforce_expiry", existing.enforce_expiry)
+                    existing.max_keys_per_user = entry.get("max_keys_per_user", existing.max_keys_per_user)
+                    existing.open_webui_enabled = entry.get("open_webui_enabled", existing.open_webui_enabled)
+                    if backend_names:
+                        existing.backends = backends
+                    logger.info("Updated config profile: %s", name)
+                else:
+                    logger.warning(
+                        "Config profile '%s' conflicts with admin-created profile — skipping",
+                        name,
+                    )
+            else:
+                profile = BackendProfile(
+                    name=name,
+                    description=entry.get("description", ""),
+                    policy_text=entry.get("policy_text", ""),
+                    oidc_groups=oidc_groups,
+                    source="config",
+                    metadata_audit=entry.get("metadata_audit", True),
+                    content_audit=entry.get("content_audit", False),
+                    default_expiry_days=entry.get("default_expiry_days"),
+                    enforce_expiry=entry.get("enforce_expiry", False),
+                    max_keys_per_user=entry.get("max_keys_per_user", 5),
+                    open_webui_enabled=entry.get("open_webui_enabled", False),
+                )
+                profile.backends = backends
+                db.session.add(profile)
+                logger.info("Seeded config profile: %s", name)
+
+        # Remove stale config-sourced profiles
+        stale = BackendProfile.query.filter(
+            BackendProfile.source == "config",
+            ~BackendProfile.name.in_(config_names) if config_names else True,
+        ).all()
+        for profile in stale:
+            logger.info("Removing stale config profile: %s", profile.name)
+            db.session.delete(profile)
+
+        db.session.commit()
+

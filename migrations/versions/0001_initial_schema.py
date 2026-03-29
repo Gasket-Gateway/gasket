@@ -39,6 +39,7 @@ def upgrade() -> None:
         sa.Column("description", sa.Text(), nullable=False, server_default=""),
         sa.Column("policy_text", sa.Text(), nullable=False, server_default=""),
         sa.Column("oidc_groups", sa.Text(), nullable=False, server_default=""),
+        sa.Column("source", sa.Text(), nullable=False, server_default="admin"),
         sa.Column("metadata_audit", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column("content_audit", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         sa.Column("default_expiry_days", sa.Integer(), nullable=True),

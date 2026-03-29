@@ -378,3 +378,59 @@ class TestProfilesAdminPage:
         response = client.get("/admin")
         assert response.status_code == 200
         assert "Backend Profiles" in response.text
+
+
+class TestConfigProfile:
+    """Verify config-defined profiles are seeded and read-only."""
+
+    def test_config_profile_seeded(self, client):
+        """Config-defined profile 'internal-standard' should exist in the list."""
+        response = client.get("/admin/api/profiles")
+        assert response.status_code == 200
+        profiles = response.json()
+        config_profiles = [p for p in profiles if p["name"] == "internal-standard"]
+        assert len(config_profiles) == 1
+
+        profile = config_profiles[0]
+        assert profile["source"] == "config"
+        assert profile["oidc_groups"] == ["gasket-users"]
+        assert "ollama-internal" in profile["backend_names"]
+        assert profile["metadata_audit"] is True
+        assert profile["content_audit"] is False
+
+    def test_config_profile_is_read_only_update(self, client):
+        """Config-defined profiles cannot be updated via the API."""
+        # Find the config profile
+        response = client.get("/admin/api/profiles")
+        config_profiles = [p for p in response.json() if p["name"] == "internal-standard"]
+        assert len(config_profiles) == 1
+        profile_id = config_profiles[0]["id"]
+
+        update_resp = client.put(
+            f"/admin/api/profiles/{profile_id}",
+            json={"description": "Trying to modify config profile"},
+        )
+        assert update_resp.status_code == 403
+
+    def test_config_profile_is_read_only_delete(self, client):
+        """Config-defined profiles cannot be deleted via the API."""
+        response = client.get("/admin/api/profiles")
+        config_profiles = [p for p in response.json() if p["name"] == "internal-standard"]
+        assert len(config_profiles) == 1
+        profile_id = config_profiles[0]["id"]
+
+        delete_resp = client.delete(f"/admin/api/profiles/{profile_id}")
+        assert delete_resp.status_code == 403
+
+    def test_admin_created_profile_has_admin_source(self, client):
+        """Admin-created profiles should have source='admin'."""
+        create_resp = client.post(
+            "/admin/api/profiles",
+            json={"name": "test-admin-source"},
+        )
+        assert create_resp.status_code == 201
+        data = create_resp.json()
+        assert data["source"] == "admin"
+
+        client.delete(f"/admin/api/profiles/{data['id']}")
+

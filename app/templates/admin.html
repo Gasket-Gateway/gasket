@@ -132,7 +132,8 @@
             <tr>
               <th>Name</th>
               <th>Description</th>
-              <th>OIDC Group</th>
+              <th>OIDC Groups</th>
+              <th>Source</th>
               <th>Backends</th>
               <th>Audit</th>
               <th>Keys</th>
@@ -1294,6 +1295,7 @@
 
         profiles.forEach(function(p) {
           var tr = document.createElement('tr');
+          var isConfig = p.source === 'config';
           
           var backendsList = p.backend_names && p.backend_names.length > 0 
             ? escapeHtml(p.backend_names.join(', '))
@@ -1313,10 +1315,15 @@
             oidcGroupsDisplay = '—';
           }
 
+          var sourceBadge = isConfig
+            ? '<span class="badge badge-info" style="font-size:0.7rem;">config</span>'
+            : '<span class="badge badge-outline" style="font-size:0.7rem;">admin</span>';
+
           tr.innerHTML =
             '<td><strong>' + escapeHtml(p.name) + '</strong></td>' +
             '<td><span class="text-muted" style="font-size:0.8rem;">' + escapeHtml(p.description || '—') + '</span></td>' +
             '<td>' + oidcGroupsDisplay + '</td>' +
+            '<td>' + sourceBadge + '</td>' +
             '<td><span style="font-size:0.8rem;">' + backendsList + '</span></td>' +
             '<td><span style="font-size:0.8rem;">' + auditDisplay + '</span></td>' +
             '<td><span style="font-size:0.8rem;">Max ' + p.max_keys_per_user + ' keys</span></td>' +
@@ -1324,21 +1331,23 @@
 
           var actionsCell = tr.querySelector('td:last-child div');
 
-          // Edit button
-          var editBtn = document.createElement('button');
-          editBtn.className = 'btn btn-info btn-sm';
-          editBtn.textContent = 'Edit';
-          editBtn.style.fontSize = '0.7rem';
-          editBtn.addEventListener('click', function() { openProfileEditModal(p.id); });
-          actionsCell.appendChild(editBtn);
+          if (!isConfig) {
+            // Edit button
+            var editBtn = document.createElement('button');
+            editBtn.className = 'btn btn-info btn-sm';
+            editBtn.textContent = 'Edit';
+            editBtn.style.fontSize = '0.7rem';
+            editBtn.addEventListener('click', function() { openProfileEditModal(p.id); });
+            actionsCell.appendChild(editBtn);
 
-          // Delete button
-          var delBtn = document.createElement('button');
-          delBtn.className = 'btn btn-danger btn-sm';
-          delBtn.textContent = 'Delete';
-          delBtn.style.fontSize = '0.7rem';
-          delBtn.addEventListener('click', function() { openProfileDeleteModal(p.id, p.name); });
-          actionsCell.appendChild(delBtn);
+            // Delete button
+            var delBtn = document.createElement('button');
+            delBtn.className = 'btn btn-danger btn-sm';
+            delBtn.textContent = 'Delete';
+            delBtn.style.fontSize = '0.7rem';
+            delBtn.addEventListener('click', function() { openProfileDeleteModal(p.id, p.name); });
+            actionsCell.appendChild(delBtn);
+          }
 
           tbody.appendChild(tr);
         });

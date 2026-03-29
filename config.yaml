@@ -62,5 +62,17 @@ openai_backends:
     api_key: ""
     skip_tls_verify: true
 
-# Backend Profiles (placeholder)
-backend_profiles: []
+# Backend Profiles (config-defined — read-only in admin panel)
+# These are automatically synced to the database on startup.
+# Backends are referenced by name (must match an openai_backends entry).
+backend_profiles:
+  - name: "internal-standard"
+    description: "Standard access to the internal Ollama instance"
+    oidc_groups:
+      - "gasket-users"
+    backends:
+      - "ollama-internal"
+    metadata_audit: true
+    content_audit: false
+    max_keys_per_user: 5
+

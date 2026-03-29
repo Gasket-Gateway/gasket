@@ -72,6 +72,11 @@ def create_app(config_path=None):
 
     seed_config_backends(app)
 
+    # Seed config-defined backend profiles into the database
+    from .profiles import seed_config_profiles
+
+    seed_config_profiles(app)
+
     # Test mode — bypass OIDC and inject a mock admin session
     if os.environ.get("GASKET_TEST_MODE"):
         app.secret_key = "test-secret-key"
