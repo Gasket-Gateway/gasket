@@ -2,17 +2,21 @@
 
 from concurrent.futures import ThreadPoolExecutor
 
-from flask import Blueprint, current_app, jsonify, render_template
+from flask import Blueprint, current_app, jsonify, render_template, request
 
 from ..auth import login_required, groups_required
 from ..health_checks import (
     check_postgresql,
     check_oidc,
     check_opensearch,
-    check_openai_backends,
+    check_openai_backends_from_db,
+    check_openai_backend,
 )
 
 admin_bp = Blueprint("admin", __name__)
+
+
+# ─── Pages ─────────────────────────────────────────────────────────
 
 
 @admin_bp.route("/admin")
@@ -21,6 +25,9 @@ admin_bp = Blueprint("admin", __name__)
 def admin_page():
     """Render the admin panel page."""
     return render_template("admin.html")
+
+
+# ─── System status ─────────────────────────────────────────────────
 
 
 @admin_bp.route("/admin/api/status")
@@ -43,8 +50,8 @@ def admin_status():
             status, detail, latency_ms = future.result(timeout=10)
             results[name] = {"status": status, "detail": detail, "latency_ms": latency_ms}
 
-    # OpenAI backends checked separately (variable count)
-    results["openai_backends"] = check_openai_backends(config)
+    # OpenAI backends checked from the database
+    results["openai_backends"] = check_openai_backends_from_db()
 
     return jsonify(results)
 
@@ -67,9 +74,108 @@ def admin_status_single(service):
         return jsonify({"status": status, "detail": detail, "latency_ms": latency_ms})
 
     # Check if it's an OpenAI backend by name
-    from ..health_checks import check_openai_backend
-    for backend in config.get("openai_backends", []):
-        if backend.get("name") == service:
-            return jsonify(check_openai_backend(backend))
+    from ..backends import get_backend_by_name
+
+    backend = get_backend_by_name(service)
+    if backend:
+        return jsonify(check_openai_backend(backend))
 
     return jsonify({"status": "error", "detail": f"Unknown service: {service}", "latency_ms": 0}), 404
+
+
+# ─── OpenAI Backends CRUD ──────────────────────────────────────────
+
+
+@admin_bp.route("/admin/api/backends")
+@login_required
+@groups_required("gasket-admins")
+def list_backends_api():
+    """List all OpenAI backends."""
+    from ..backends import list_backends
+
+    backends = list_backends()
+    return jsonify([b.to_dict(mask_key=True) for b in backends])
+
+
+@admin_bp.route("/admin/api/backends", methods=["POST"])
+@login_required
+@groups_required("gasket-admins")
+def create_backend_api():
+    """Create a new admin-sourced OpenAI backend."""
+    from ..backends import create_backend
+
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Request body must be JSON"}), 400
+
+    name = (data.get("name") or "").strip()
+    base_url = (data.get("base_url") or "").strip()
+    if not name or not base_url:
+        return jsonify({"error": "name and base_url are required"}), 400
+
+    api_key = data.get("api_key", "")
+    skip_tls_verify = bool(data.get("skip_tls_verify", False))
+
+    try:
+        backend = create_backend(name, base_url, api_key, skip_tls_verify)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 409
+
+    current_app.logger.info("Admin created backend: %s", name)
+    return jsonify(backend.to_dict(mask_key=False)), 201
+
+
+@admin_bp.route("/admin/api/backends/<int:backend_id>")
+@login_required
+@groups_required("gasket-admins")
+def get_backend_api(backend_id):
+    """Get a single OpenAI backend (full API key for edit form)."""
+    from ..backends import get_backend
+
+    backend = get_backend(backend_id)
+    if not backend:
+        return jsonify({"error": "Backend not found"}), 404
+
+    return jsonify(backend.to_dict(mask_key=False))
+
+
+@admin_bp.route("/admin/api/backends/<int:backend_id>", methods=["PUT"])
+@login_required
+@groups_required("gasket-admins")
+def update_backend_api(backend_id):
+    """Update an admin-sourced backend."""
+    from ..backends import update_backend
+
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Request body must be JSON"}), 400
+
+    try:
+        backend = update_backend(backend_id, **data)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 404 if "not found" in str(e).lower() else 409
+    except PermissionError as e:
+        return jsonify({"error": str(e)}), 403
+
+    current_app.logger.info("Admin updated backend: %s", backend.name)
+    return jsonify(backend.to_dict(mask_key=False))
+
+
+@admin_bp.route("/admin/api/backends/<int:backend_id>", methods=["DELETE"])
+@login_required
+@groups_required("gasket-admins")
+def delete_backend_api(backend_id):
+    """Delete an admin-sourced backend."""
+    from ..backends import get_backend, delete_backend
+
+    backend = get_backend(backend_id)
+    if not backend:
+        return jsonify({"error": "Backend not found"}), 404
+
+    try:
+        delete_backend(backend_id)
+    except PermissionError as e:
+        return jsonify({"error": str(e)}), 403
+
+    current_app.logger.info("Admin deleted backend: %s", backend.name)
+    return jsonify({"message": f"Backend '{backend.name}' deleted"})

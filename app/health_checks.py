@@ -84,20 +84,30 @@ def check_opensearch(config):
 
 
 def check_openai_backend(backend, default_verify=True):
-    """Test a single OpenAI-compliant backend by listing models."""
-    base_url = backend.get("base_url", "").rstrip("/")
-    name = backend.get("name", "unknown")
+    """Test a single OpenAI-compliant backend by listing models.
+
+    Accepts either a dict or an OpenAIBackend model instance.
+    """
+    # Support both dict and ORM model
+    if hasattr(backend, "base_url"):
+        base_url = (backend.base_url or "").rstrip("/")
+        name = backend.name or "unknown"
+        api_key = backend.api_key or ""
+        skip_tls = backend.skip_tls_verify
+    else:
+        base_url = backend.get("base_url", "").rstrip("/")
+        name = backend.get("name", "unknown")
+        api_key = backend.get("api_key", "")
+        skip_tls = backend.get("skip_tls_verify", False)
+
     if not base_url:
         return {"name": name, "status": "error", "detail": "No base_url configured", "latency_ms": 0}
 
-    api_key = backend.get("api_key", "")
     headers = {}
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
 
-    verify = default_verify
-    if "skip_tls_verify" in backend:
-        verify = not backend["skip_tls_verify"]
+    verify = not skip_tls if skip_tls is not None else default_verify
 
     status, detail, latency_ms = _http_get(
         f"{base_url}/v1/models", verify=verify, headers=headers
@@ -105,8 +115,18 @@ def check_openai_backend(backend, default_verify=True):
     return {"name": name, "status": status, "detail": detail, "latency_ms": latency_ms}
 
 
+def check_openai_backends_from_db():
+    """Test all OpenAI backends from the database."""
+    from .backends import list_backends
+
+    results = []
+    for backend in list_backends():
+        results.append(check_openai_backend(backend))
+    return results
+
+
 def check_openai_backends(config):
-    """Test all config-defined OpenAI backends."""
+    """Test all config-defined OpenAI backends (legacy — use check_openai_backends_from_db)."""
     backends = config.get("openai_backends", [])
     results = []
     for backend in backends:

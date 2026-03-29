@@ -44,7 +44,7 @@
 
   /* Text on accent backgrounds */
   --on-accent:        #ffffff;
-  --on-semantic:      #1a1a1a;
+  --on-semantic:      #ffffff;
 
   /* Shadows (hard, no blur — neo-brutalism signature) */
   --shadow-sm:        3px 3px 0 var(--border-color);

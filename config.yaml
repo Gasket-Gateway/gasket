@@ -54,5 +54,13 @@ opensearch:
   url: "https://opensearch.gasket-dev.local"
   skip_tls_verify: false
 
+# OpenAI-compliant backends (config-defined — read-only in admin panel)
+# These are automatically synced to the database on startup.
+openai_backends:
+  - name: "ollama-internal"
+    base_url: "https://ollama-internal.gasket-dev.local"
+    api_key: ""
+    skip_tls_verify: true
+
 # Backend Profiles (placeholder)
 backend_profiles: []

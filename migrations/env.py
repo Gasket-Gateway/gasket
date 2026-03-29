@@ -2,6 +2,9 @@
 
 Reads database connection settings from Gasket's config.yaml
 (via GASKET_CONFIG env var) so migrations use the same DB as the app.
+
+Model metadata is imported from app.models so that
+`alembic revision --autogenerate` can detect schema changes.
 """
 
 import os
@@ -10,10 +13,11 @@ from logging.config import fileConfig
 
 from alembic import context
 
-# Add the gasket root to the path so we can import app.config
+# Add the gasket root to the path so we can import app modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.config import load_config
+from app.models import db as flask_db
 
 # Alembic Config object
 config = context.config
@@ -22,8 +26,8 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# No SQLAlchemy models — we use raw SQL migrations
-target_metadata = None
+# SQLAlchemy model metadata — enables `alembic revision --autogenerate`
+target_metadata = flask_db.metadata
 
 
 def get_database_url():

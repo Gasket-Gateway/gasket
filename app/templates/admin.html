@@ -32,7 +32,10 @@
 
     <!-- ═══ Connection Status Page ═══ -->
     <div id="page-status" class="admin-page active">
-      <h2>Connection Status</h2>
+      <div class="flex" style="align-items: center; justify-content: space-between; margin-bottom: 0;">
+        <h2 style="margin-bottom: 0;">Connection Status</h2>
+        <button class="btn btn-outline btn-sm" id="btn-check-all-status">↻ Check All</button>
+      </div>
       <p>Health check status for all integrations.</p>
 
       <div class="grid grid-4" style="margin-top: var(--space-lg);" id="connection-status">
@@ -70,10 +73,39 @@
 
     <!-- ═══ OpenAI Backends Page ═══ -->
     <div id="page-backends" class="admin-page">
-      <h2>OpenAI Backends</h2>
-      <p>Add, edit, and delete OpenAI-compliant backends. Config-defined backends are read-only.</p>
-      <div style="margin-top: var(--space-lg);">
-        <span class="badge badge-info">Coming Soon</span>
+      <div class="flex" style="align-items: center; justify-content: space-between; margin-bottom: var(--space-md);">
+        <div>
+          <h2 style="margin-bottom: 0;">OpenAI Backends</h2>
+          <p class="text-muted" style="margin-top: var(--space-xs);">Add, edit, and delete OpenAI-compliant backends. Config-defined backends are read-only.</p>
+        </div>
+        <div style="display: flex; gap: var(--space-xs);">
+          <button class="btn btn-outline btn-sm" id="btn-check-all-backends">↻ Check All</button>
+          <button class="btn btn-primary btn-sm" id="btn-add-backend">+ Add Backend</button>
+        </div>
+      </div>
+
+      <div id="backends-loading" class="text-muted" style="padding: var(--space-lg); text-align: center;">Loading backends…</div>
+
+      <div id="backends-empty" style="display: none; padding: var(--space-lg); text-align: center;">
+        <p class="text-muted">No backends configured yet.</p>
+        <button class="btn btn-primary btn-sm" onclick="document.getElementById('btn-add-backend').click()">+ Add your first backend</button>
+      </div>
+
+      <div class="table-wrapper" id="backends-table-wrapper" style="display: none;">
+        <table class="table table-sortable" id="backends-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Base URL</th>
+              <th>API Key</th>
+              <th>TLS Verify</th>
+              <th>Source</th>
+              <th>Status</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="backends-tbody"></tbody>
+        </table>
       </div>
     </div>
 
@@ -131,6 +163,67 @@
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- ═══ Backend Add/Edit Modal ═══ -->
+<div class="modal-overlay" id="backend-modal" role="dialog" aria-modal="true" aria-labelledby="backend-modal-title">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="backend-modal-title">Add Backend</h3>
+      <button class="modal-close" id="backend-modal-close" aria-label="Close dialog">✕</button>
+    </div>
+    <form id="backend-form" autocomplete="off">
+      <input type="hidden" id="backend-form-id" value="">
+      <div class="form-group">
+        <label class="form-label" for="backend-form-name">Name *</label>
+        <input type="text" class="form-input" id="backend-form-name" required placeholder="e.g. ollama-local">
+        <p class="form-hint">Unique name for this backend.</p>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="backend-form-url">Base URL *</label>
+        <input type="url" class="form-input" id="backend-form-url" required placeholder="e.g. http://ollama:11434">
+        <p class="form-hint">OpenAI-compliant API endpoint (without /v1).</p>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="backend-form-key">API Key</label>
+        <input type="text" class="form-input" id="backend-form-key" placeholder="Leave blank if not required">
+        <p class="form-hint">Bearer token for upstream authentication.</p>
+      </div>
+      <div class="form-group">
+        <div class="form-check">
+          <input type="checkbox" class="form-check-input" id="backend-form-tls">
+          <label class="form-check-label" for="backend-form-tls">Skip TLS verification</label>
+        </div>
+        <p class="form-hint">Only enable for development environments with self-signed certificates.</p>
+      </div>
+      <div id="backend-form-error" style="display: none; color: var(--accent-danger); margin-bottom: var(--space-sm); font-size: 0.85rem;"></div>
+      <div id="backend-form-test-result" style="display: none; margin-bottom: var(--space-sm); font-size: 0.85rem; padding: var(--space-sm); border: 2px solid var(--border-color); border-radius: var(--radius-sm);"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline btn-sm" id="backend-form-test">⟳ Save & Test</button>
+        <div style="flex: 1;"></div>
+        <button type="button" class="btn btn-outline btn-sm" id="backend-form-cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm" id="backend-form-submit">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══ Backend Delete Confirmation Modal ═══ -->
+<div class="modal-overlay" id="backend-delete-modal" role="dialog" aria-modal="true" aria-labelledby="backend-delete-title">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="backend-delete-title">Delete Backend</h3>
+      <button class="modal-close" id="backend-delete-close" aria-label="Close dialog">✕</button>
+    </div>
+    <div>
+      <p>Are you sure you want to delete <strong id="backend-delete-name"></strong>?</p>
+      <p class="text-muted" style="font-size: 0.85rem;">This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline btn-sm" id="backend-delete-cancel">Cancel</button>
+      <button type="button" class="btn btn-danger btn-sm" id="backend-delete-confirm">Delete</button>
+    </div>
   </div>
 </div>
 
@@ -386,53 +479,423 @@
     return card;
   }
 
-  // ─── Initial fetch ───
-  fetch('/admin/api/status')
-    .then(function(res) { return res.json(); })
-    .then(function(data) {
-      var serviceNames = {
-        postgresql: 'PostgreSQL',
-        oidc: 'OIDC Provider',
-        opensearch: 'OpenSearch'
-      };
-      Object.keys(serviceNames).forEach(function(svc) {
-        if (data[svc]) {
+  // ─── Fetch all connection statuses ───
+  var coreServiceNames = {
+    postgresql: 'PostgreSQL',
+    oidc: 'OIDC Provider',
+    opensearch: 'OpenSearch'
+  };
+
+  function fetchAllStatuses() {
+    // Reset core cards to checking state
+    Object.keys(coreServiceNames).forEach(function(svc) {
+      var card = document.getElementById('status-card-' + svc);
+      if (card) resetCardToChecking(card);
+    });
+
+    fetch('/admin/api/status')
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        Object.keys(coreServiceNames).forEach(function(svc) {
+          if (data[svc]) {
+            var card = document.getElementById('status-card-' + svc);
+            if (card) {
+              updateCard(card, svc, coreServiceNames[svc], data[svc].status, data[svc].detail, data[svc].latency_ms);
+            }
+          }
+        });
+
+        // OpenAI backends
+        var container = document.getElementById('openai-backends-status');
+        container.innerHTML = '';
+        if (data.openai_backends && data.openai_backends.length > 0) {
+          var heading = document.createElement('h3');
+          heading.textContent = 'OpenAI Backends';
+          heading.style.marginBottom = 'var(--space-md)';
+          container.appendChild(heading);
+
+          var grid = document.createElement('div');
+          grid.className = 'grid grid-4';
+          data.openai_backends.forEach(function(backend) {
+            grid.appendChild(createBackendCard(backend));
+          });
+          container.appendChild(grid);
+        }
+      })
+      .catch(function() {
+        Object.keys(coreServiceNames).forEach(function(svc) {
           var card = document.getElementById('status-card-' + svc);
           if (card) {
-            updateCard(card, svc, serviceNames[svc], data[svc].status, data[svc].detail, data[svc].latency_ms);
+            updateCard(card, svc, coreServiceNames[svc], 'error', 'Failed to fetch status from /admin/api/status', 0);
           }
-        }
-      });
-
-      // OpenAI backends
-      var container = document.getElementById('openai-backends-status');
-      if (data.openai_backends && data.openai_backends.length > 0) {
-        var heading = document.createElement('h3');
-        heading.textContent = 'OpenAI Backends';
-        heading.style.marginBottom = 'var(--space-md)';
-        container.appendChild(heading);
-
-        var grid = document.createElement('div');
-        grid.className = 'grid grid-4';
-        data.openai_backends.forEach(function(backend) {
-          grid.appendChild(createBackendCard(backend));
         });
-        container.appendChild(grid);
-      }
-    })
-    .catch(function() {
-      var serviceNames = {
-        postgresql: 'PostgreSQL',
-        oidc: 'OIDC Provider',
-        opensearch: 'OpenSearch'
-      };
-      Object.keys(serviceNames).forEach(function(svc) {
-        var card = document.getElementById('status-card-' + svc);
-        if (card) {
-          updateCard(card, svc, serviceNames[svc], 'error', 'Failed to fetch status from /admin/api/status', 0);
-        }
       });
+  }
+
+  // Initial fetch on page load
+  fetchAllStatuses();
+
+  // Check All button on Connection Status page
+  document.getElementById('btn-check-all-status').addEventListener('click', fetchAllStatuses);
+
+  // ═══════════════════════════════════════════════════════════════
+  //  OpenAI Backends CRUD
+  // ═══════════════════════════════════════════════════════════════
+
+  var backendModal = document.getElementById('backend-modal');
+  var backendForm = document.getElementById('backend-form');
+  var backendFormId = document.getElementById('backend-form-id');
+  var backendFormName = document.getElementById('backend-form-name');
+  var backendFormUrl = document.getElementById('backend-form-url');
+  var backendFormKey = document.getElementById('backend-form-key');
+  var backendFormTls = document.getElementById('backend-form-tls');
+  var backendFormError = document.getElementById('backend-form-error');
+  var backendFormSubmit = document.getElementById('backend-form-submit');
+  var backendModalTitle = document.getElementById('backend-modal-title');
+
+  var deleteModal = document.getElementById('backend-delete-modal');
+  var deleteNameEl = document.getElementById('backend-delete-name');
+  var deleteConfirmBtn = document.getElementById('backend-delete-confirm');
+  var pendingDeleteId = null;
+
+  // ─── Open backend modal for add ───
+  document.getElementById('btn-add-backend').addEventListener('click', function() {
+    backendModalTitle.textContent = 'Add Backend';
+    backendFormSubmit.textContent = 'Create';
+    backendFormId.value = '';
+    backendFormName.value = '';
+    backendFormUrl.value = '';
+    backendFormKey.value = '';
+    backendFormTls.checked = false;
+    backendFormName.disabled = false;
+    backendFormError.style.display = 'none';
+    if (document.getElementById('backend-form-test-result')) document.getElementById('backend-form-test-result').style.display = 'none';
+    backendModal.classList.add('active');
+    backendFormName.focus();
+  });
+
+  // ─── Open backend modal for edit ───
+  function openEditModal(id) {
+    backendFormError.style.display = 'none';
+    if (document.getElementById('backend-form-test-result')) document.getElementById('backend-form-test-result').style.display = 'none';
+    backendFormSubmit.textContent = 'Saving…';
+    backendFormSubmit.disabled = true;
+    backendModalTitle.textContent = 'Edit Backend';
+
+    fetch('/admin/api/backends/' + id)
+      .then(function(r) { return r.json(); })
+      .then(function(b) {
+        backendFormId.value = b.id;
+        backendFormName.value = b.name;
+        backendFormUrl.value = b.base_url;
+        backendFormKey.value = b.api_key;
+        backendFormTls.checked = b.skip_tls_verify;
+        backendFormName.disabled = false;
+        backendFormSubmit.textContent = 'Save';
+        backendFormSubmit.disabled = false;
+        backendModal.classList.add('active');
+        backendFormUrl.focus();
+      })
+      .catch(function() {
+        backendFormSubmit.textContent = 'Save';
+        backendFormSubmit.disabled = false;
+      });
+  }
+
+  // ─── Close backend modal ───
+  function closeBackendModal() {
+    backendModal.classList.remove('active');
+  }
+  document.getElementById('backend-modal-close').addEventListener('click', closeBackendModal);
+  document.getElementById('backend-form-cancel').addEventListener('click', closeBackendModal);
+  backendModal.addEventListener('click', function(e) {
+    if (e.target === backendModal) closeBackendModal();
+  });
+
+  // ─── Submit backend form (create or update) ───
+  backendForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    backendFormError.style.display = 'none';
+
+    var id = backendFormId.value;
+    var payload = {
+      name: backendFormName.value.trim(),
+      base_url: backendFormUrl.value.trim(),
+      api_key: backendFormKey.value,
+      skip_tls_verify: backendFormTls.checked
+    };
+
+    var url = id ? '/admin/api/backends/' + id : '/admin/api/backends';
+    var method = id ? 'PUT' : 'POST';
+
+    backendFormSubmit.disabled = true;
+    backendFormSubmit.textContent = id ? 'Saving…' : 'Creating…';
+
+    fetch(url, {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+      .then(function(res) {
+        if (!res.ok) return res.json().then(function(d) { throw new Error(d.error || 'Request failed'); });
+        return res.json();
+      })
+      .then(function() {
+        closeBackendModal();
+        loadBackends();
+      })
+      .catch(function(err) {
+        backendFormError.textContent = err.message;
+        backendFormError.style.display = 'block';
+      })
+      .finally(function() {
+        backendFormSubmit.disabled = false;
+        backendFormSubmit.textContent = id ? 'Save' : 'Create';
+      });
+  });
+
+  // ─── Delete modal ───
+  function openDeleteModal(id, name) {
+    pendingDeleteId = id;
+    deleteNameEl.textContent = name;
+    deleteConfirmBtn.disabled = false;
+    deleteConfirmBtn.textContent = 'Delete';
+    deleteModal.classList.add('active');
+  }
+
+  function closeDeleteModal() {
+    deleteModal.classList.remove('active');
+    pendingDeleteId = null;
+  }
+  document.getElementById('backend-delete-close').addEventListener('click', closeDeleteModal);
+  document.getElementById('backend-delete-cancel').addEventListener('click', closeDeleteModal);
+  deleteModal.addEventListener('click', function(e) {
+    if (e.target === deleteModal) closeDeleteModal();
+  });
+
+  deleteConfirmBtn.addEventListener('click', function() {
+    if (!pendingDeleteId) return;
+    deleteConfirmBtn.disabled = true;
+    deleteConfirmBtn.textContent = 'Deleting…';
+
+    fetch('/admin/api/backends/' + pendingDeleteId, { method: 'DELETE' })
+      .then(function(res) {
+        if (!res.ok) return res.json().then(function(d) { throw new Error(d.error); });
+        closeDeleteModal();
+        loadBackends();
+      })
+      .catch(function(err) {
+        deleteConfirmBtn.disabled = false;
+        deleteConfirmBtn.textContent = 'Delete';
+        alert('Delete failed: ' + err.message);
+      });
+  });
+
+  // ─── Test connection for a backend (table row) ───
+  function testBackendConnection(name, btn) {
+    btn.disabled = true;
+    btn.textContent = '⟳';
+
+    fetch('/admin/api/status/' + encodeURIComponent(name))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        updateBackendRowStatus(btn.closest('tr'), data);
+      })
+      .finally(function() {
+        btn.disabled = false;
+        btn.textContent = '⟳';
+      });
+  }
+
+  // ─── Update a backend table row's status dot/text ───
+  function updateBackendRowStatus(row, data) {
+    if (!row) return;
+    var dot = row.querySelector('.status-dot');
+    if (dot) {
+      dot.className = 'status-dot ' + (data.status === 'connected' ? 'status-connected' : 'status-error');
+    }
+    var statusText = row.querySelector('.backend-status-text');
+    if (statusText) {
+      statusText.textContent = data.status === 'connected' ? formatLatency(data.latency_ms) : 'Error';
+      statusText.className = 'backend-status-text ' + (data.status === 'connected' ? 'text-muted' : 'text-danger');
+    }
+  }
+
+  // ─── Check all backends in the table ───
+  function checkAllBackends() {
+    var rows = document.querySelectorAll('#backends-tbody tr');
+    rows.forEach(function(row) {
+      var testBtn = row.querySelector('.btn-outline');
+      var nameCell = row.querySelector('td:first-child strong');
+      if (testBtn && nameCell) {
+        testBackendConnection(nameCell.textContent, testBtn);
+      }
     });
+  }
+
+  document.getElementById('btn-check-all-backends').addEventListener('click', checkAllBackends);
+
+  // ─── Test Connection from the edit modal ───
+  var backendFormTestBtn = document.getElementById('backend-form-test');
+  var backendFormTestResult = document.getElementById('backend-form-test-result');
+
+  backendFormTestBtn.addEventListener('click', function() {
+    backendFormTestResult.style.display = 'none';
+    backendFormError.style.display = 'none';
+
+    var name = backendFormName.value.trim();
+    var baseUrl = backendFormUrl.value.trim();
+
+    if (!name || !baseUrl) {
+      backendFormError.textContent = 'name and base_url are required';
+      backendFormError.style.display = 'block';
+      return;
+    }
+
+    var id = backendFormId.value;
+    var payload = {
+      name: name,
+      base_url: baseUrl,
+      api_key: backendFormKey.value,
+      skip_tls_verify: backendFormTls.checked
+    };
+
+    var url = id ? '/admin/api/backends/' + id : '/admin/api/backends';
+    var method = id ? 'PUT' : 'POST';
+
+    backendFormTestBtn.disabled = true;
+    backendFormTestBtn.textContent = '⟳ Saving…';
+
+    fetch(url, {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+      .then(function(res) {
+        if (!res.ok) return res.json().then(function(d) { throw new Error(d.error || 'Save failed'); });
+        return res.json();
+      })
+      .then(function(saved) {
+        // Update form ID so subsequent saves are PUTs
+        backendFormId.value = saved.id;
+        backendFormTestBtn.textContent = '⟳ Testing…';
+
+        return fetch('/admin/api/status/' + encodeURIComponent(saved.name))
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            backendFormTestResult.style.display = 'block';
+            if (data.status === 'connected') {
+              backendFormTestResult.style.color = 'var(--color-success)';
+              backendFormTestResult.textContent = '✓ Saved & connected — ' + formatLatency(data.latency_ms);
+            } else {
+              backendFormTestResult.style.color = 'var(--color-danger)';
+              backendFormTestResult.textContent = '✗ Saved but connection failed — ' + (data.detail || 'Unknown error');
+            }
+          });
+      })
+      .catch(function(err) {
+        backendFormError.textContent = err.message;
+        backendFormError.style.display = 'block';
+      })
+      .finally(function() {
+        backendFormTestBtn.disabled = false;
+        backendFormTestBtn.textContent = '⟳ Save & Test';
+      });
+  });
+
+  // ─── Load and render backends table ───
+  function loadBackends(autoCheck) {
+    var loading = document.getElementById('backends-loading');
+    var empty = document.getElementById('backends-empty');
+    var wrapper = document.getElementById('backends-table-wrapper');
+    var tbody = document.getElementById('backends-tbody');
+
+    loading.style.display = 'block';
+    empty.style.display = 'none';
+    wrapper.style.display = 'none';
+
+    fetch('/admin/api/backends')
+      .then(function(r) { return r.json(); })
+      .then(function(backends) {
+        loading.style.display = 'none';
+        tbody.innerHTML = '';
+
+        if (backends.length === 0) {
+          empty.style.display = 'block';
+          return;
+        }
+
+        wrapper.style.display = 'block';
+
+        backends.forEach(function(b) {
+          var tr = document.createElement('tr');
+          var isConfig = b.source === 'config';
+          var sourceBadge = isConfig
+            ? '<span class="badge badge-info" style="font-size:0.7rem;">config</span>'
+            : '<span class="badge badge-outline" style="font-size:0.7rem;">admin</span>';
+
+          tr.innerHTML =
+            '<td><strong>' + escapeHtml(b.name) + '</strong></td>' +
+            '<td><code style="font-size:0.8rem;">' + escapeHtml(b.base_url) + '</code></td>' +
+            '<td><code style="font-size:0.8rem;">' + escapeHtml(b.api_key || '—') + '</code></td>' +
+            '<td>' + (b.skip_tls_verify ? '⚠️ Skipped' : '✓ Enabled') + '</td>' +
+            '<td>' + sourceBadge + '</td>' +
+            '<td><div class="status-indicator" style="gap:var(--space-xs);"><span class="status-dot status-checking"></span><span class="backend-status-text text-muted" style="font-size:0.8rem;">—</span></div></td>' +
+            '<td style="text-align:right;"><div style="display:flex;gap:var(--space-xs);justify-content:flex-end;"></div></td>';
+
+          var actionsCell = tr.querySelector('td:last-child div');
+
+          // Test connection button
+          var testBtn = document.createElement('button');
+          testBtn.className = 'btn btn-outline btn-sm';
+          testBtn.textContent = '⟳';
+          testBtn.title = 'Test connection';
+          testBtn.style.fontSize = '0.7rem';
+          testBtn.addEventListener('click', function() {
+            testBackendConnection(b.name, testBtn);
+          });
+          actionsCell.appendChild(testBtn);
+
+          if (!isConfig) {
+            // Edit button
+            var editBtn = document.createElement('button');
+            editBtn.className = 'btn btn-info btn-sm';
+            editBtn.textContent = 'Edit';
+            editBtn.style.fontSize = '0.7rem';
+            editBtn.addEventListener('click', function() { openEditModal(b.id); });
+            actionsCell.appendChild(editBtn);
+
+            // Delete button
+            var delBtn = document.createElement('button');
+            delBtn.className = 'btn btn-danger btn-sm';
+            delBtn.textContent = 'Delete';
+            delBtn.style.fontSize = '0.7rem';
+            delBtn.addEventListener('click', function() { openDeleteModal(b.id, b.name); });
+            actionsCell.appendChild(delBtn);
+          }
+
+          tbody.appendChild(tr);
+        });
+
+        // Auto-check all backends if requested
+        if (autoCheck) {
+          setTimeout(checkAllBackends, 100);
+        }
+      })
+      .catch(function() {
+        loading.style.display = 'none';
+        empty.style.display = 'block';
+      });
+  }
+
+  // Load backends when the backends page becomes active, then auto-check all
+  var backendsLink = document.querySelector('.sidebar-link[data-page="page-backends"]');
+  if (backendsLink) {
+    backendsLink.addEventListener('click', function() {
+      loadBackends(true);
+    });
+  }
+
 })();
 </script>
 {% endblock %}

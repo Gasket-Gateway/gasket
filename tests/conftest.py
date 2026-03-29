@@ -24,6 +24,12 @@ class GasketClient:
     def post(self, path, **kwargs):
         return self.session.post(f"{self.base_url}{path}", **kwargs)
 
+    def put(self, path, **kwargs):
+        return self.session.put(f"{self.base_url}{path}", **kwargs)
+
+    def delete(self, path, **kwargs):
+        return self.session.delete(f"{self.base_url}{path}", **kwargs)
+
 
 @pytest.fixture(scope="session", autouse=True)
 def wait_for_gasket():

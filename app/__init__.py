@@ -59,10 +59,18 @@ def create_app(config_path=None):
             )
             return response
 
-    # Run database migrations on startup
-    from .db import run_migrations
+    # Initialise SQLAlchemy
+    from .db import init_db, run_migrations
 
+    init_db(app)
+
+    # Run database migrations on startup
     run_migrations()
+
+    # Seed config-defined backends into the database
+    from .backends import seed_config_backends
+
+    seed_config_backends(app)
 
     # Test mode — bypass OIDC and inject a mock admin session
     if os.environ.get("GASKET_TEST_MODE"):
