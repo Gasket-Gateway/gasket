@@ -63,3 +63,88 @@ class OpenAIBackend(db.Model):
 
     def __repr__(self):
         return f"<OpenAIBackend {self.name!r} ({self.source})>"
+
+
+# ── Association table: many-to-many between profiles and backends ──
+
+profile_backends = db.Table(
+    "profile_backends",
+    db.Column("profile_id", db.Integer, db.ForeignKey("backend_profiles.id", ondelete="CASCADE"), primary_key=True),
+    db.Column("backend_id", db.Integer, db.ForeignKey("openai_backends.id", ondelete="CASCADE"), primary_key=True),
+)
+
+
+class BackendProfile(db.Model):
+    """A backend profile governing access to one or more OpenAI backends.
+
+    Profiles define policy text, audit settings, expiry rules, quotas,
+    and which OIDC group grants access.
+    """
+
+    __tablename__ = "backend_profiles"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.Text, nullable=False, unique=True)
+    description = db.Column(db.Text, nullable=False, server_default="")
+    policy_text = db.Column(db.Text, nullable=False, server_default="")
+    oidc_groups = db.Column(db.Text, nullable=False, server_default="")
+
+    # Audit settings
+    metadata_audit = db.Column(db.Boolean, nullable=False, server_default=db.text("true"))
+    content_audit = db.Column(db.Boolean, nullable=False, server_default=db.text("false"))
+
+    # API key settings
+    default_expiry_days = db.Column(db.Integer, nullable=True)
+    enforce_expiry = db.Column(db.Boolean, nullable=False, server_default=db.text("false"))
+    max_keys_per_user = db.Column(db.Integer, nullable=False, server_default=db.text("5"))
+
+    # Open WebUI
+    open_webui_enabled = db.Column(db.Boolean, nullable=False, server_default=db.text("false"))
+
+    # Timestamps
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        server_default=db.func.now(),
+    )
+    updated_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        server_default=db.func.now(),
+        onupdate=db.func.now(),
+    )
+
+    # Relationships
+    backends = db.relationship(
+        "OpenAIBackend",
+        secondary=profile_backends,
+        backref=db.backref("profiles", lazy="dynamic"),
+        lazy="selectin",
+    )
+
+    def to_dict(self):
+        """Serialise to a JSON-safe dict."""
+        # Split comma-separated groups into a list, filtering blanks
+        groups_raw = self.oidc_groups or ""
+        groups_list = [g.strip() for g in groups_raw.split(",") if g.strip()]
+
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "policy_text": self.policy_text,
+            "oidc_groups": groups_list,
+            "metadata_audit": self.metadata_audit,
+            "content_audit": self.content_audit,
+            "default_expiry_days": self.default_expiry_days,
+            "enforce_expiry": self.enforce_expiry,
+            "max_keys_per_user": self.max_keys_per_user,
+            "open_webui_enabled": self.open_webui_enabled,
+            "backend_ids": [b.id for b in self.backends],
+            "backend_names": [b.name for b in self.backends],
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+    def __repr__(self):
+        return f"<BackendProfile {self.name!r}>"

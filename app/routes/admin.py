@@ -179,3 +179,102 @@ def delete_backend_api(backend_id):
 
     current_app.logger.info("Admin deleted backend: %s", backend.name)
     return jsonify({"message": f"Backend '{backend.name}' deleted"})
+
+
+# ─── Backend Profiles CRUD ─────────────────────────────────────────
+
+
+@admin_bp.route("/admin/api/profiles")
+@login_required
+@groups_required("gasket-admins")
+def list_profiles_api():
+    """List all backend profiles."""
+    from ..profiles import list_profiles
+
+    profiles = list_profiles()
+    return jsonify([p.to_dict() for p in profiles])
+
+
+@admin_bp.route("/admin/api/profiles", methods=["POST"])
+@login_required
+@groups_required("gasket-admins")
+def create_profile_api():
+    """Create a new backend profile."""
+    from ..profiles import create_profile
+
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Request body must be JSON"}), 400
+
+    name = (data.get("name") or "").strip()
+    if not name:
+        return jsonify({"error": "name is required"}), 400
+
+    try:
+        profile = create_profile(data)
+    except ValueError as e:
+        msg = str(e)
+        if "already exists" in msg:
+            return jsonify({"error": msg}), 409
+        if "not found" in msg.lower():
+            return jsonify({"error": msg}), 400
+        return jsonify({"error": msg}), 400
+
+    current_app.logger.info("Admin created profile: %s", name)
+    return jsonify(profile.to_dict()), 201
+
+
+@admin_bp.route("/admin/api/profiles/<int:profile_id>")
+@login_required
+@groups_required("gasket-admins")
+def get_profile_api(profile_id):
+    """Get a single backend profile."""
+    from ..profiles import get_profile
+
+    profile = get_profile(profile_id)
+    if not profile:
+        return jsonify({"error": "Profile not found"}), 404
+
+    return jsonify(profile.to_dict())
+
+
+@admin_bp.route("/admin/api/profiles/<int:profile_id>", methods=["PUT"])
+@login_required
+@groups_required("gasket-admins")
+def update_profile_api(profile_id):
+    """Update a backend profile."""
+    from ..profiles import update_profile
+
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Request body must be JSON"}), 400
+
+    try:
+        profile = update_profile(profile_id, data)
+    except ValueError as e:
+        msg = str(e)
+        if "not found" in msg.lower() and "profile" in msg.lower():
+            return jsonify({"error": msg}), 404
+        if "already exists" in msg:
+            return jsonify({"error": msg}), 409
+        return jsonify({"error": msg}), 400
+
+    current_app.logger.info("Admin updated profile: %s", profile.name)
+    return jsonify(profile.to_dict())
+
+
+@admin_bp.route("/admin/api/profiles/<int:profile_id>", methods=["DELETE"])
+@login_required
+@groups_required("gasket-admins")
+def delete_profile_api(profile_id):
+    """Delete a backend profile."""
+    from ..profiles import get_profile, delete_profile
+
+    profile = get_profile(profile_id)
+    if not profile:
+        return jsonify({"error": "Profile not found"}), 404
+
+    delete_profile(profile_id)
+
+    current_app.logger.info("Admin deleted profile: %s", profile.name)
+    return jsonify({"message": f"Profile '{profile.name}' deleted"})

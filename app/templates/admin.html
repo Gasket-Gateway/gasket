@@ -111,10 +111,36 @@
 
     <!-- ═══ Backend Profiles Page ═══ -->
     <div id="page-profiles" class="admin-page">
-      <h2>Backend Profiles</h2>
-      <p>Create, edit, and delete backend profiles with associated backends and policies.</p>
-      <div style="margin-top: var(--space-lg);">
-        <span class="badge badge-info">Coming Soon</span>
+      <div class="flex" style="align-items: center; justify-content: space-between; margin-bottom: var(--space-md);">
+        <div>
+          <h2 style="margin-bottom: 0;">Backend Profiles</h2>
+          <p class="text-muted" style="margin-top: var(--space-xs);">Create, edit, and delete backend profiles with associated backends and policies.</p>
+        </div>
+        <button class="btn btn-primary btn-sm" id="btn-add-profile">+ Add Profile</button>
+      </div>
+
+      <div id="profiles-loading" class="text-muted" style="padding: var(--space-lg); text-align: center;">Loading profiles…</div>
+
+      <div id="profiles-empty" style="display: none; padding: var(--space-lg); text-align: center;">
+        <p class="text-muted">No profiles configured yet.</p>
+        <button class="btn btn-primary btn-sm" onclick="document.getElementById('btn-add-profile').click()">+ Add your first profile</button>
+      </div>
+
+      <div class="table-wrapper" id="profiles-table-wrapper" style="display: none;">
+        <table class="table" id="profiles-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Description</th>
+              <th>OIDC Group</th>
+              <th>Backends</th>
+              <th>Audit</th>
+              <th>Keys</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="profiles-tbody"></tbody>
+        </table>
       </div>
     </div>
 
@@ -223,6 +249,123 @@
     <div class="modal-footer">
       <button type="button" class="btn btn-outline btn-sm" id="backend-delete-cancel">Cancel</button>
       <button type="button" class="btn btn-danger btn-sm" id="backend-delete-confirm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Profile Add/Edit Modal ═══ -->
+<div class="modal-overlay" id="profile-modal" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title">
+  <div class="modal" style="max-width: 640px;">
+    <div class="modal-header">
+      <h3 id="profile-modal-title">Add Profile</h3>
+      <button class="modal-close" id="profile-modal-close" aria-label="Close dialog">✕</button>
+    </div>
+    <form id="profile-form" autocomplete="off">
+      <input type="hidden" id="profile-form-id" value="">
+
+      <!-- ── General ── -->
+      <p style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: var(--space-sm); font-weight: 600;">General</p>
+      
+      <div class="form-group">
+        <label class="form-label" for="profile-form-name">Name *</label>
+        <input type="text" class="form-input" id="profile-form-name" required placeholder="e.g. standard-tier">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="profile-form-desc">Description</label>
+        <textarea class="form-textarea" id="profile-form-desc" placeholder="Internal description for admins — supports multiple lines" style="min-height: 60px;"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="profile-form-policy">Policy Text</label>
+        <textarea class="form-textarea" id="profile-form-policy" placeholder="Terms of service or policy text users must accept before use" style="min-height: 100px;"></textarea>
+        <p class="form-hint">Displayed to users. They must accept this policy before creating API keys.</p>
+      </div>
+
+      <hr style="border: none; border-top: 1px solid var(--border-color); margin: var(--space-md) 0;">
+
+      <!-- ── Access & Backends ── -->
+      <p style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: var(--space-sm); font-weight: 600;">Access &amp; Backends</p>
+
+      <div class="form-group">
+        <label class="form-label" for="profile-form-oidc-groups">OIDC Groups</label>
+        <textarea class="form-textarea" id="profile-form-oidc-groups" placeholder="gasket-users&#10;gasket-power-users" style="min-height: 56px;"></textarea>
+        <p class="form-hint">One OIDC group per line. Users in any of these groups can access this profile.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="profile-form-backends">Linked Backends</label>
+        <select class="form-select" id="profile-form-backends" multiple size="4" style="height: auto; padding-right: var(--space-md);">
+          <!-- Populated dynamically via JS -->
+        </select>
+        <p class="form-hint">Hold Ctrl/Cmd to select multiple backends.</p>
+      </div>
+
+      <hr style="border: none; border-top: 1px solid var(--border-color); margin: var(--space-md) 0;">
+
+      <!-- ── Settings ── -->
+      <p style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: var(--space-sm); font-weight: 600;">Settings</p>
+
+      <div class="grid grid-2" style="margin-bottom: var(--space-md); gap: var(--space-lg);">
+        <div>
+          <label class="form-label" style="margin-bottom: var(--space-sm);">Audit</label>
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="profile-form-audit-meta" checked>
+            <label class="form-check-label" for="profile-form-audit-meta">Metadata audit</label>
+          </div>
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="profile-form-audit-content">
+            <label class="form-check-label" for="profile-form-audit-content">Full content audit</label>
+          </div>
+          <p class="form-hint" style="margin-top: var(--space-xs);">Content audit logs full request/response bodies to OpenSearch.</p>
+        </div>
+
+        <div>
+          <label class="form-label" style="margin-bottom: var(--space-sm);">API Key Limits</label>
+          <div class="form-group" style="margin-bottom: var(--space-sm);">
+            <label class="form-label" for="profile-form-max-keys" style="font-size: 0.8rem; margin-bottom: 2px;">Max keys per user</label>
+            <input type="number" class="form-input" id="profile-form-max-keys" value="5" min="1" style="width: 100px;">
+          </div>
+          <div class="form-group" style="margin-bottom: var(--space-sm);">
+            <label class="form-label" for="profile-form-expiry-days" style="font-size: 0.8rem; margin-bottom: 2px;">Default expiry (days)</label>
+            <input type="number" class="form-input" id="profile-form-expiry-days" min="1" style="width: 100px;" placeholder="None">
+          </div>
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="profile-form-enforce-expiry">
+            <label class="form-check-label" for="profile-form-enforce-expiry">Enforce expiry limit</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-check" style="margin-bottom: var(--space-md);">
+        <input type="checkbox" class="form-check-input" id="profile-form-open-webui">
+        <label class="form-check-label" for="profile-form-open-webui">Enable Open WebUI header support</label>
+        <p class="form-hint" style="margin-left: 24px;">When enabled, users can opt-in per API key to trust Open WebUI identity headers.</p>
+      </div>
+
+      <div id="profile-form-error" style="display: none; color: var(--accent-danger); margin-bottom: var(--space-sm); font-size: 0.85rem;"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline btn-sm" id="profile-form-cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm" id="profile-form-submit">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══ Profile Delete Confirmation Modal ═══ -->
+<div class="modal-overlay" id="profile-delete-modal" role="dialog" aria-modal="true" aria-labelledby="profile-delete-title">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="profile-delete-title">Delete Profile</h3>
+      <button class="modal-close" id="profile-delete-close" aria-label="Close dialog">✕</button>
+    </div>
+    <div>
+      <p>Are you sure you want to delete <strong id="profile-delete-name"></strong>?</p>
+      <p class="text-muted" style="font-size: 0.85rem;">This will not delete the associated backends, but any API keys tied specifically to this profile may become invalid.</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline btn-sm" id="profile-delete-cancel">Cancel</button>
+      <button type="button" class="btn btn-danger btn-sm" id="profile-delete-confirm">Delete</button>
     </div>
   </div>
 </div>
@@ -893,6 +1036,324 @@
   if (backendsLink) {
     backendsLink.addEventListener('click', function() {
       loadBackends(true);
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  //  Backend Profiles CRUD
+  // ═══════════════════════════════════════════════════════════════
+
+  var profileModal = document.getElementById('profile-modal');
+  var profileForm = document.getElementById('profile-form');
+  var profileFormId = document.getElementById('profile-form-id');
+  var profileFormName = document.getElementById('profile-form-name');
+  var profileFormOidcGroups = document.getElementById('profile-form-oidc-groups');
+  var profileFormDesc = document.getElementById('profile-form-desc');
+  var profileFormPolicy = document.getElementById('profile-form-policy');
+  var profileFormBackends = document.getElementById('profile-form-backends');
+  
+  var profileFormAuditMeta = document.getElementById('profile-form-audit-meta');
+  var profileFormAuditContent = document.getElementById('profile-form-audit-content');
+  var profileFormOpenWebui = document.getElementById('profile-form-open-webui');
+  var profileFormMaxKeys = document.getElementById('profile-form-max-keys');
+  var profileFormExpiryDays = document.getElementById('profile-form-expiry-days');
+  var profileFormEnforceExpiry = document.getElementById('profile-form-enforce-expiry');
+
+  var profileFormError = document.getElementById('profile-form-error');
+  var profileFormSubmit = document.getElementById('profile-form-submit');
+  var profileModalTitle = document.getElementById('profile-modal-title');
+
+  var profileDeleteModal = document.getElementById('profile-delete-modal');
+  var profileDeleteNameEl = document.getElementById('profile-delete-name');
+  var profileDeleteConfirmBtn = document.getElementById('profile-delete-confirm');
+  var pendingProfileDeleteId = null;
+
+  // ─── Fetch backends for select ───
+  function populateProfileBackendsSelect(selectedIds) {
+    profileFormBackends.innerHTML = '';
+    return fetch('/admin/api/backends')
+      .then(function(r) { return r.json(); })
+      .then(function(backends) {
+        backends.forEach(function(b) {
+          var opt = document.createElement('option');
+          opt.value = b.id;
+          opt.textContent = b.name;
+          if (selectedIds && selectedIds.includes(b.id)) {
+            opt.selected = true;
+          }
+          profileFormBackends.appendChild(opt);
+        });
+      });
+  }
+
+  // ─── Open profile modal for add ───
+  document.getElementById('btn-add-profile').addEventListener('click', function() {
+    profileModalTitle.textContent = 'Add Profile';
+    profileFormSubmit.textContent = 'Create';
+    profileFormId.value = '';
+    profileFormName.value = '';
+    profileFormName.disabled = false;
+    profileFormOidcGroups.value = '';
+    profileFormDesc.value = '';
+    profileFormPolicy.value = '';
+    
+    profileFormAuditMeta.checked = true;
+    profileFormAuditContent.checked = false;
+    profileFormOpenWebui.checked = false;
+    
+    profileFormMaxKeys.value = 5;
+    profileFormExpiryDays.value = '';
+    profileFormEnforceExpiry.checked = false;
+    
+    profileFormError.style.display = 'none';
+
+    populateProfileBackendsSelect([]).then(function() {
+      profileModal.classList.add('active');
+      profileFormName.focus();
+    });
+  });
+
+  // ─── Open profile modal for edit ───
+  function openProfileEditModal(id) {
+    profileFormError.style.display = 'none';
+    profileFormSubmit.textContent = 'Saving…';
+    profileFormSubmit.disabled = true;
+    profileModalTitle.textContent = 'Edit Profile';
+    
+    // Default values while loading
+    populateProfileBackendsSelect([]);
+    profileFormName.value = 'Loading…';
+    profileFormName.disabled = true;
+    profileModal.classList.add('active');
+
+    fetch('/admin/api/profiles/' + id)
+      .then(function(r) {
+        if (!r.ok) throw new Error('Failed to load profile');
+        return r.json();
+      })
+      .then(function(data) {
+        profileFormId.value = data.id;
+        profileFormName.value = data.name;
+        profileFormName.disabled = false; 
+        
+        profileFormOidcGroups.value = (data.oidc_groups || []).join('\n');
+        profileFormDesc.value = data.description || '';
+        profileFormPolicy.value = data.policy_text || '';
+        
+        profileFormAuditMeta.checked = data.metadata_audit;
+        profileFormAuditContent.checked = data.content_audit;
+        profileFormOpenWebui.checked = data.open_webui_enabled;
+        
+        profileFormMaxKeys.value = data.max_keys_per_user;
+        profileFormExpiryDays.value = data.default_expiry_days || '';
+        profileFormEnforceExpiry.checked = data.enforce_expiry;
+
+        populateProfileBackendsSelect(data.backend_ids);
+      })
+      .catch(function(err) {
+        profileFormError.textContent = err.message;
+        profileFormError.style.display = 'block';
+      })
+      .finally(function() {
+        profileFormSubmit.textContent = 'Save';
+        profileFormSubmit.disabled = false;
+      });
+  }
+
+  // ─── Open profile delete modal ───
+  function openProfileDeleteModal(id, name) {
+    pendingProfileDeleteId = id;
+    profileDeleteNameEl.textContent = name;
+    profileDeleteModal.classList.add('active');
+  }
+
+  // ─── Close modals ───
+  document.getElementById('profile-modal-close').addEventListener('click', function() { profileModal.classList.remove('active'); });
+  document.getElementById('profile-form-cancel').addEventListener('click', function() { profileModal.classList.remove('active'); });
+  document.getElementById('profile-delete-close').addEventListener('click', function() { profileDeleteModal.classList.remove('active'); });
+  document.getElementById('profile-delete-cancel').addEventListener('click', function() { profileDeleteModal.classList.remove('active'); });
+
+  // ─── Handle Profile form submission ───
+  profileForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    profileFormError.style.display = 'none';
+
+    var name = profileFormName.value.trim();
+    if (!name) {
+      profileFormError.textContent = 'Name is required';
+      profileFormError.style.display = 'block';
+      return;
+    }
+
+    var selectedBackends = [];
+    for (var i = 0; i < profileFormBackends.options.length; i++) {
+        if (profileFormBackends.options[i].selected) {
+            selectedBackends.push(parseInt(profileFormBackends.options[i].value, 10));
+        }
+    }
+
+    // Parse newline-separated OIDC groups into a list
+    var oidcGroupsRaw = profileFormOidcGroups.value.trim();
+    var oidcGroupsList = oidcGroupsRaw ? oidcGroupsRaw.split('\n').map(function(g) { return g.trim(); }).filter(function(g) { return g; }) : [];
+
+    var payload = {
+      name: name,
+      oidc_groups: oidcGroupsList,
+      description: profileFormDesc.value.trim(),
+      policy_text: profileFormPolicy.value.trim(),
+      metadata_audit: profileFormAuditMeta.checked,
+      content_audit: profileFormAuditContent.checked,
+      open_webui_enabled: profileFormOpenWebui.checked,
+      max_keys_per_user: parseInt(profileFormMaxKeys.value, 10) || 5,
+      enforce_expiry: profileFormEnforceExpiry.checked,
+      backend_ids: selectedBackends
+    };
+    
+    var expDays = parseInt(profileFormExpiryDays.value, 10);
+    if (!isNaN(expDays) && expDays > 0) {
+        payload.default_expiry_days = expDays;
+    } else {
+        payload.default_expiry_days = null;
+    }
+
+    var id = profileFormId.value;
+    var url = id ? '/admin/api/profiles/' + id : '/admin/api/profiles';
+    var method = id ? 'PUT' : 'POST';
+
+    profileFormSubmit.disabled = true;
+    profileFormSubmit.textContent = 'Saving…';
+
+    fetch(url, {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+      .then(function(res) {
+        if (!res.ok) return res.json().then(function(d) { throw new Error(d.error || 'Save failed'); });
+        return res.json();
+      })
+      .then(function() {
+        profileModal.classList.remove('active');
+        loadProfiles();
+      })
+      .catch(function(err) {
+        profileFormError.textContent = err.message;
+        profileFormError.style.display = 'block';
+      })
+      .finally(function() {
+        profileFormSubmit.disabled = false;
+        profileFormSubmit.textContent = 'Save';
+      });
+  });
+
+  // ─── Handle Profile deletion ───
+  profileDeleteConfirmBtn.addEventListener('click', function() {
+    if (!pendingProfileDeleteId) return;
+
+    profileDeleteConfirmBtn.disabled = true;
+    profileDeleteConfirmBtn.textContent = 'Deleting…';
+
+    fetch('/admin/api/profiles/' + pendingProfileDeleteId, { method: 'DELETE' })
+      .then(function(res) {
+        if (!res.ok) throw new Error('Delete failed');
+        profileDeleteModal.classList.remove('active');
+        loadProfiles();
+      })
+      .catch(function() {
+        alert('Failed to delete profile.');
+      })
+      .finally(function() {
+        profileDeleteConfirmBtn.disabled = false;
+        profileDeleteConfirmBtn.textContent = 'Delete';
+      });
+  });
+
+  // ─── Load and render profiles table ───
+  function loadProfiles() {
+    var loading = document.getElementById('profiles-loading');
+    var empty = document.getElementById('profiles-empty');
+    var wrapper = document.getElementById('profiles-table-wrapper');
+    var tbody = document.getElementById('profiles-tbody');
+
+    loading.style.display = 'block';
+    empty.style.display = 'none';
+    wrapper.style.display = 'none';
+
+    fetch('/admin/api/profiles')
+      .then(function(r) { return r.json(); })
+      .then(function(profiles) {
+        loading.style.display = 'none';
+        tbody.innerHTML = '';
+
+        if (profiles.length === 0) {
+          empty.style.display = 'block';
+          return;
+        }
+
+        wrapper.style.display = 'block';
+
+        profiles.forEach(function(p) {
+          var tr = document.createElement('tr');
+          
+          var backendsList = p.backend_names && p.backend_names.length > 0 
+            ? escapeHtml(p.backend_names.join(', '))
+            : '<em>None</em>';
+            
+          var auditStr = [];
+          if (p.metadata_audit) auditStr.push('Meta');
+          if (p.content_audit) auditStr.push('Content');
+          var auditDisplay = auditStr.length ? escapeHtml(auditStr.join(' + ')) : 'None';
+          
+          var oidcGroupsDisplay = '';
+          if (p.oidc_groups && p.oidc_groups.length > 0) {
+            oidcGroupsDisplay = p.oidc_groups.map(function(g) {
+              return '<span class="badge badge-outline" style="font-size:0.7rem; margin-right:2px;">' + escapeHtml(g) + '</span>';
+            }).join(' ');
+          } else {
+            oidcGroupsDisplay = '—';
+          }
+
+          tr.innerHTML =
+            '<td><strong>' + escapeHtml(p.name) + '</strong></td>' +
+            '<td><span class="text-muted" style="font-size:0.8rem;">' + escapeHtml(p.description || '—') + '</span></td>' +
+            '<td>' + oidcGroupsDisplay + '</td>' +
+            '<td><span style="font-size:0.8rem;">' + backendsList + '</span></td>' +
+            '<td><span style="font-size:0.8rem;">' + auditDisplay + '</span></td>' +
+            '<td><span style="font-size:0.8rem;">Max ' + p.max_keys_per_user + ' keys</span></td>' +
+            '<td style="text-align:right;"><div style="display:flex;gap:var(--space-xs);justify-content:flex-end;"></div></td>';
+
+          var actionsCell = tr.querySelector('td:last-child div');
+
+          // Edit button
+          var editBtn = document.createElement('button');
+          editBtn.className = 'btn btn-info btn-sm';
+          editBtn.textContent = 'Edit';
+          editBtn.style.fontSize = '0.7rem';
+          editBtn.addEventListener('click', function() { openProfileEditModal(p.id); });
+          actionsCell.appendChild(editBtn);
+
+          // Delete button
+          var delBtn = document.createElement('button');
+          delBtn.className = 'btn btn-danger btn-sm';
+          delBtn.textContent = 'Delete';
+          delBtn.style.fontSize = '0.7rem';
+          delBtn.addEventListener('click', function() { openProfileDeleteModal(p.id, p.name); });
+          actionsCell.appendChild(delBtn);
+
+          tbody.appendChild(tr);
+        });
+      })
+      .catch(function() {
+        loading.style.display = 'none';
+        empty.style.display = 'block';
+      });
+  }
+
+  // Load profiles when the profiles page becomes active
+  var profilesLink = document.querySelector('.sidebar-link[data-page="page-profiles"]');
+  if (profilesLink) {
+    profilesLink.addEventListener('click', function() {
+      loadProfiles();
     });
   }
 
