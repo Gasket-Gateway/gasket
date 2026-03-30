@@ -18,7 +18,7 @@
       <a href="#" class="sidebar-link" data-page="page-backends">🔌 OpenAI Backends</a>
       <a href="#" class="sidebar-link" data-page="page-profiles">📂 Backend Profiles</a>
       <a href="#" class="sidebar-link" data-page="page-keys">🔑 API Keys</a>
-      <a href="#" class="sidebar-link" data-page="page-policies">📋 Policy Records</a>
+      <a href="#" class="sidebar-link" data-page="page-policies">📋 Policies</a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-title">Monitoring</div>
@@ -126,7 +126,7 @@
         <button class="btn btn-primary btn-sm" onclick="document.getElementById('btn-add-profile').click()">+ Add your first profile</button>
       </div>
 
-      <div class="table-wrapper" id="profiles-table-wrapper" style="display: none;">
+      <div id="profiles-table-wrapper" style="display: none;">
         <table class="table" id="profiles-table">
           <thead>
             <tr>
@@ -135,6 +135,7 @@
               <th>OIDC Groups</th>
               <th>Source</th>
               <th>Backends</th>
+              <th>Policies</th>
               <th>Audit</th>
               <th>Keys</th>
               <th style="text-align: right;">Actions</th>
@@ -154,12 +155,62 @@
       </div>
     </div>
 
-    <!-- ═══ Policy Records Page ═══ -->
+    <!-- ═══ Policies Management Page ═══ -->
     <div id="page-policies" class="admin-page">
-      <h2>Policy Acceptance Records</h2>
-      <p>View policy acceptance records with search and filter by Gasket user.</p>
-      <div style="margin-top: var(--space-lg);">
-        <span class="badge badge-info">Coming Soon</span>
+      <div class="flex" style="align-items: center; justify-content: space-between; margin-bottom: var(--space-md);">
+        <div>
+          <h2 style="margin-bottom: 0;">Policies</h2>
+          <p class="text-muted" style="margin-top: var(--space-xs);">Create, edit, and delete policies. Assign policies to backend profiles. Config-defined policies are read-only.</p>
+        </div>
+        <button class="btn btn-primary btn-sm" id="btn-add-policy">+ Add Policy</button>
+      </div>
+
+      <div id="policies-loading" class="text-muted" style="padding: var(--space-lg); text-align: center;">Loading policies…</div>
+
+      <div id="policies-empty" style="display: none; padding: var(--space-lg); text-align: center;">
+        <p class="text-muted">No policies configured yet.</p>
+        <button class="btn btn-primary btn-sm" onclick="document.getElementById('btn-add-policy').click()">+ Add your first policy</button>
+      </div>
+
+      <div id="policies-table-wrapper" style="display: none;">
+        <table class="table" id="policies-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Source</th>
+              <th>Version</th>
+              <th>Reacceptance</th>
+              <th>Profiles</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="policies-tbody"></tbody>
+        </table>
+      </div>
+
+      <h3 style="margin-top: var(--space-xl);">Acceptance Records</h3>
+      <p class="text-muted" style="margin-bottom: var(--space-md);">Policy acceptance records with search by user.</p>
+
+      <div class="form-group" style="max-width: 400px; margin-bottom: var(--space-md);">
+        <input type="text" class="form-input" id="acceptances-user-filter" placeholder="Filter by user email…">
+      </div>
+
+      <div id="acceptances-loading" class="text-muted" style="padding: var(--space-lg); text-align: center;">Loading…</div>
+      <div id="acceptances-empty" style="display: none; padding: var(--space-md); text-align: center;"><p class="text-muted">No acceptance records found.</p></div>
+      <div id="acceptances-table-wrapper" style="display: none;">
+        <table class="table" id="acceptances-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Policy</th>
+              <th>Version</th>
+              <th>Profile</th>
+              <th>Accepted At</th>
+            </tr>
+          </thead>
+          <tbody id="acceptances-tbody"></tbody>
+        </table>
       </div>
     </div>
 
@@ -277,12 +328,6 @@
         <textarea class="form-textarea" id="profile-form-desc" placeholder="Internal description for admins — supports multiple lines" style="min-height: 60px;"></textarea>
       </div>
 
-      <div class="form-group">
-        <label class="form-label" for="profile-form-policy">Policy Text</label>
-        <textarea class="form-textarea" id="profile-form-policy" placeholder="Terms of service or policy text users must accept before use" style="min-height: 100px;"></textarea>
-        <p class="form-hint">Displayed to users. They must accept this policy before creating API keys.</p>
-      </div>
-
       <hr style="border: none; border-top: 1px solid var(--border-color); margin: var(--space-md) 0;">
 
       <!-- ── Access & Backends ── -->
@@ -300,6 +345,14 @@
           <!-- Populated dynamically via JS -->
         </select>
         <p class="form-hint">Hold Ctrl/Cmd to select multiple backends.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="profile-form-policies">Linked Policies</label>
+        <select class="form-select" id="profile-form-policies" multiple size="4" style="height: auto; padding-right: var(--space-md);">
+          <!-- Populated dynamically via JS -->
+        </select>
+        <p class="form-hint">Hold Ctrl/Cmd to select multiple policies. Users must accept all linked policies before creating API keys.</p>
       </div>
 
       <hr style="border: none; border-top: 1px solid var(--border-color); margin: var(--space-md) 0;">
@@ -367,6 +420,61 @@
     <div class="modal-footer">
       <button type="button" class="btn btn-outline btn-sm" id="profile-delete-cancel">Cancel</button>
       <button type="button" class="btn btn-danger btn-sm" id="profile-delete-confirm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Policy Add/Edit Modal ═══ -->
+<div class="modal-overlay" id="policy-modal" role="dialog" aria-modal="true" aria-labelledby="policy-modal-title">
+  <div class="modal" style="max-width: 640px;">
+    <div class="modal-header">
+      <h3 id="policy-modal-title">Add Policy</h3>
+      <button class="modal-close" id="policy-modal-close" aria-label="Close dialog">✕</button>
+    </div>
+    <form id="policy-form" autocomplete="off">
+      <input type="hidden" id="policy-form-id" value="">
+      <div class="form-group">
+        <label class="form-label" for="policy-form-name">Name *</label>
+        <input type="text" class="form-input" id="policy-form-name" required placeholder="e.g. acceptable-use">
+        <p class="form-hint">Unique name for this policy.</p>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="policy-form-desc">Description</label>
+        <textarea class="form-textarea" id="policy-form-desc" placeholder="Internal description for admins" style="min-height: 60px;"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="policy-form-content">Policy Content *</label>
+        <textarea class="form-textarea" id="policy-form-content" required placeholder="The policy text that users must accept" style="min-height: 120px;"></textarea>
+        <p class="form-hint">Displayed to users. They must accept this before creating API keys. Changing content creates a new version.</p>
+      </div>
+      <div class="form-check" style="margin-bottom: var(--space-md);">
+        <input type="checkbox" class="form-check-input" id="policy-form-reaccept">
+        <label class="form-check-label" for="policy-form-reaccept">Enforce reacceptance on change</label>
+        <p class="form-hint" style="margin-left: 24px;">When enabled, users must reaccept the policy after content changes before they can create new API keys.</p>
+      </div>
+      <div id="policy-form-error" style="display: none; color: var(--accent-danger); margin-bottom: var(--space-sm); font-size: 0.85rem;"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline btn-sm" id="policy-form-cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm" id="policy-form-submit">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══ Policy Delete Confirmation Modal ═══ -->
+<div class="modal-overlay" id="policy-delete-modal" role="dialog" aria-modal="true" aria-labelledby="policy-delete-title">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="policy-delete-title">Delete Policy</h3>
+      <button class="modal-close" id="policy-delete-close" aria-label="Close dialog">✕</button>
+    </div>
+    <div>
+      <p>Are you sure you want to delete <strong id="policy-delete-name"></strong>?</p>
+      <p class="text-muted" style="font-size: 0.85rem;">This will remove all versions and acceptance records for this policy.</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline btn-sm" id="policy-delete-cancel">Cancel</button>
+      <button type="button" class="btn btn-danger btn-sm" id="policy-delete-confirm">Delete</button>
     </div>
   </div>
 </div>
@@ -1050,8 +1158,8 @@
   var profileFormName = document.getElementById('profile-form-name');
   var profileFormOidcGroups = document.getElementById('profile-form-oidc-groups');
   var profileFormDesc = document.getElementById('profile-form-desc');
-  var profileFormPolicy = document.getElementById('profile-form-policy');
   var profileFormBackends = document.getElementById('profile-form-backends');
+  var profileFormPolicies = document.getElementById('profile-form-policies');
   
   var profileFormAuditMeta = document.getElementById('profile-form-audit-meta');
   var profileFormAuditContent = document.getElementById('profile-form-audit-content');
@@ -1087,6 +1195,24 @@
       });
   }
 
+  // ─── Fetch policies for select ───
+  function populateProfilePoliciesSelect(selectedIds) {
+    profileFormPolicies.innerHTML = '';
+    return fetch('/admin/api/policies')
+      .then(function(r) { return r.json(); })
+      .then(function(policies) {
+        policies.forEach(function(p) {
+          var opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = p.name + (p.current_version ? ' (v' + p.current_version + ')' : '');
+          if (selectedIds && selectedIds.includes(p.id)) {
+            opt.selected = true;
+          }
+          profileFormPolicies.appendChild(opt);
+        });
+      });
+  }
+
   // ─── Open profile modal for add ───
   document.getElementById('btn-add-profile').addEventListener('click', function() {
     profileModalTitle.textContent = 'Add Profile';
@@ -1096,7 +1222,6 @@
     profileFormName.disabled = false;
     profileFormOidcGroups.value = '';
     profileFormDesc.value = '';
-    profileFormPolicy.value = '';
     
     profileFormAuditMeta.checked = true;
     profileFormAuditContent.checked = false;
@@ -1108,7 +1233,10 @@
     
     profileFormError.style.display = 'none';
 
-    populateProfileBackendsSelect([]).then(function() {
+    Promise.all([
+      populateProfileBackendsSelect([]),
+      populateProfilePoliciesSelect([])
+    ]).then(function() {
       profileModal.classList.add('active');
       profileFormName.focus();
     });
@@ -1123,6 +1251,7 @@
     
     // Default values while loading
     populateProfileBackendsSelect([]);
+    populateProfilePoliciesSelect([]);
     profileFormName.value = 'Loading…';
     profileFormName.disabled = true;
     profileModal.classList.add('active');
@@ -1139,7 +1268,6 @@
         
         profileFormOidcGroups.value = (data.oidc_groups || []).join('\n');
         profileFormDesc.value = data.description || '';
-        profileFormPolicy.value = data.policy_text || '';
         
         profileFormAuditMeta.checked = data.metadata_audit;
         profileFormAuditContent.checked = data.content_audit;
@@ -1150,6 +1278,7 @@
         profileFormEnforceExpiry.checked = data.enforce_expiry;
 
         populateProfileBackendsSelect(data.backend_ids);
+        populateProfilePoliciesSelect(data.policy_ids);
       })
       .catch(function(err) {
         profileFormError.textContent = err.message;
@@ -1193,6 +1322,13 @@
         }
     }
 
+    var selectedPolicies = [];
+    for (var j = 0; j < profileFormPolicies.options.length; j++) {
+        if (profileFormPolicies.options[j].selected) {
+            selectedPolicies.push(parseInt(profileFormPolicies.options[j].value, 10));
+        }
+    }
+
     // Parse newline-separated OIDC groups into a list
     var oidcGroupsRaw = profileFormOidcGroups.value.trim();
     var oidcGroupsList = oidcGroupsRaw ? oidcGroupsRaw.split('\n').map(function(g) { return g.trim(); }).filter(function(g) { return g; }) : [];
@@ -1201,13 +1337,13 @@
       name: name,
       oidc_groups: oidcGroupsList,
       description: profileFormDesc.value.trim(),
-      policy_text: profileFormPolicy.value.trim(),
       metadata_audit: profileFormAuditMeta.checked,
       content_audit: profileFormAuditContent.checked,
       open_webui_enabled: profileFormOpenWebui.checked,
       max_keys_per_user: parseInt(profileFormMaxKeys.value, 10) || 5,
       enforce_expiry: profileFormEnforceExpiry.checked,
-      backend_ids: selectedBackends
+      backend_ids: selectedBackends,
+      policy_ids: selectedPolicies
     };
     
     var expDays = parseInt(profileFormExpiryDays.value, 10);
@@ -1300,6 +1436,12 @@
           var backendsList = p.backend_names && p.backend_names.length > 0 
             ? escapeHtml(p.backend_names.join(', '))
             : '<em>None</em>';
+
+          var policiesList = p.policy_names && p.policy_names.length > 0
+            ? p.policy_names.map(function(n) {
+                return '<span class="badge badge-outline" style="font-size:0.7rem; margin-right:2px;">' + escapeHtml(n) + '</span>';
+              }).join(' ')
+            : '—';
             
           var auditStr = [];
           if (p.metadata_audit) auditStr.push('Meta');
@@ -1325,6 +1467,7 @@
             '<td>' + oidcGroupsDisplay + '</td>' +
             '<td>' + sourceBadge + '</td>' +
             '<td><span style="font-size:0.8rem;">' + backendsList + '</span></td>' +
+            '<td>' + policiesList + '</td>' +
             '<td><span style="font-size:0.8rem;">' + auditDisplay + '</span></td>' +
             '<td><span style="font-size:0.8rem;">Max ' + p.max_keys_per_user + ' keys</span></td>' +
             '<td style="text-align:right;"><div style="display:flex;gap:var(--space-xs);justify-content:flex-end;"></div></td>';
@@ -1363,6 +1506,305 @@
   if (profilesLink) {
     profilesLink.addEventListener('click', function() {
       loadProfiles();
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  //  Policies CRUD
+  // ═══════════════════════════════════════════════════════════════
+
+  var policyModal = document.getElementById('policy-modal');
+  var policyForm = document.getElementById('policy-form');
+  var policyFormId = document.getElementById('policy-form-id');
+  var policyFormName = document.getElementById('policy-form-name');
+  var policyFormDesc = document.getElementById('policy-form-desc');
+  var policyFormContent = document.getElementById('policy-form-content');
+  var policyFormReaccept = document.getElementById('policy-form-reaccept');
+  var policyFormError = document.getElementById('policy-form-error');
+  var policyFormSubmit = document.getElementById('policy-form-submit');
+  var policyModalTitle = document.getElementById('policy-modal-title');
+
+  var policyDeleteModal = document.getElementById('policy-delete-modal');
+  var policyDeleteNameEl = document.getElementById('policy-delete-name');
+  var policyDeleteConfirmBtn = document.getElementById('policy-delete-confirm');
+  var pendingPolicyDeleteId = null;
+
+  // ─── Open policy modal for add ───
+  document.getElementById('btn-add-policy').addEventListener('click', function() {
+    policyModalTitle.textContent = 'Add Policy';
+    policyFormSubmit.textContent = 'Create';
+    policyFormId.value = '';
+    policyFormName.value = '';
+    policyFormName.disabled = false;
+    policyFormDesc.value = '';
+    policyFormContent.value = '';
+    policyFormReaccept.checked = false;
+    policyFormError.style.display = 'none';
+    policyModal.classList.add('active');
+    policyFormName.focus();
+  });
+
+  // ─── Open policy modal for edit ───
+  function openPolicyEditModal(id) {
+    policyFormError.style.display = 'none';
+    policyFormSubmit.textContent = 'Saving…';
+    policyFormSubmit.disabled = true;
+    policyModalTitle.textContent = 'Edit Policy';
+    policyModal.classList.add('active');
+
+    fetch('/admin/api/policies/' + id)
+      .then(function(r) {
+        if (!r.ok) throw new Error('Failed to load policy');
+        return r.json();
+      })
+      .then(function(data) {
+        policyFormId.value = data.id;
+        policyFormName.value = data.name;
+        policyFormName.disabled = false;
+        policyFormDesc.value = data.description || '';
+        policyFormContent.value = data.current_content || '';
+        policyFormReaccept.checked = data.enforce_reacceptance;
+      })
+      .catch(function(err) {
+        policyFormError.textContent = err.message;
+        policyFormError.style.display = 'block';
+      })
+      .finally(function() {
+        policyFormSubmit.textContent = 'Save';
+        policyFormSubmit.disabled = false;
+      });
+  }
+
+  // ─── Close policy modals ───
+  document.getElementById('policy-modal-close').addEventListener('click', function() { policyModal.classList.remove('active'); });
+  document.getElementById('policy-form-cancel').addEventListener('click', function() { policyModal.classList.remove('active'); });
+  document.getElementById('policy-delete-close').addEventListener('click', function() { policyDeleteModal.classList.remove('active'); });
+  document.getElementById('policy-delete-cancel').addEventListener('click', function() { policyDeleteModal.classList.remove('active'); });
+
+  // ─── Handle Policy form submission ───
+  policyForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    policyFormError.style.display = 'none';
+
+    var name = policyFormName.value.trim();
+    if (!name) {
+      policyFormError.textContent = 'Name is required';
+      policyFormError.style.display = 'block';
+      return;
+    }
+
+    var content = policyFormContent.value.trim();
+    if (!content) {
+      policyFormError.textContent = 'Policy content is required';
+      policyFormError.style.display = 'block';
+      return;
+    }
+
+    var payload = {
+      name: name,
+      description: policyFormDesc.value.trim(),
+      content: content,
+      enforce_reacceptance: policyFormReaccept.checked
+    };
+
+    var id = policyFormId.value;
+    var url = id ? '/admin/api/policies/' + id : '/admin/api/policies';
+    var method = id ? 'PUT' : 'POST';
+
+    policyFormSubmit.disabled = true;
+    policyFormSubmit.textContent = 'Saving…';
+
+    fetch(url, {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+      .then(function(res) {
+        if (!res.ok) return res.json().then(function(d) { throw new Error(d.error || 'Save failed'); });
+        return res.json();
+      })
+      .then(function() {
+        policyModal.classList.remove('active');
+        loadPolicies();
+      })
+      .catch(function(err) {
+        policyFormError.textContent = err.message;
+        policyFormError.style.display = 'block';
+      })
+      .finally(function() {
+        policyFormSubmit.disabled = false;
+        policyFormSubmit.textContent = 'Save';
+      });
+  });
+
+  // ─── Handle Policy deletion ───
+  function openPolicyDeleteModal(id, name) {
+    pendingPolicyDeleteId = id;
+    policyDeleteNameEl.textContent = name;
+    policyDeleteModal.classList.add('active');
+  }
+
+  policyDeleteConfirmBtn.addEventListener('click', function() {
+    if (!pendingPolicyDeleteId) return;
+
+    policyDeleteConfirmBtn.disabled = true;
+    policyDeleteConfirmBtn.textContent = 'Deleting…';
+
+    fetch('/admin/api/policies/' + pendingPolicyDeleteId, { method: 'DELETE' })
+      .then(function(res) {
+        if (!res.ok) throw new Error('Delete failed');
+        policyDeleteModal.classList.remove('active');
+        loadPolicies();
+      })
+      .catch(function() {
+        alert('Failed to delete policy.');
+      })
+      .finally(function() {
+        policyDeleteConfirmBtn.disabled = false;
+        policyDeleteConfirmBtn.textContent = 'Delete';
+      });
+  });
+
+  // ─── Load and render policies table ───
+  function loadPolicies() {
+    var loading = document.getElementById('policies-loading');
+    var empty = document.getElementById('policies-empty');
+    var wrapper = document.getElementById('policies-table-wrapper');
+    var tbody = document.getElementById('policies-tbody');
+
+    loading.style.display = 'block';
+    empty.style.display = 'none';
+    wrapper.style.display = 'none';
+
+    fetch('/admin/api/policies')
+      .then(function(r) { return r.json(); })
+      .then(function(policies) {
+        loading.style.display = 'none';
+        tbody.innerHTML = '';
+
+        if (policies.length === 0) {
+          empty.style.display = 'block';
+          return;
+        }
+
+        wrapper.style.display = 'block';
+
+        policies.forEach(function(p) {
+          var tr = document.createElement('tr');
+          var isConfig = p.source === 'config';
+
+          var sourceBadge = isConfig
+            ? '<span class="badge badge-info" style="font-size:0.7rem;">config</span>'
+            : '<span class="badge badge-outline" style="font-size:0.7rem;">admin</span>';
+
+          var reacceptBadge = p.enforce_reacceptance
+            ? '<span class="badge badge-warning" style="font-size:0.7rem;">Enabled</span>'
+            : '<span class="text-muted" style="font-size:0.8rem;">—</span>';
+
+          var profilesList = p.profile_names && p.profile_names.length > 0
+            ? p.profile_names.map(function(n) {
+                return '<span class="badge badge-outline" style="font-size:0.7rem; margin-right:2px;">' + escapeHtml(n) + '</span>';
+              }).join(' ')
+            : '—';
+
+          tr.innerHTML =
+            '<td><strong>' + escapeHtml(p.name) + '</strong></td>' +
+            '<td><span class="text-muted" style="font-size:0.8rem;">' + escapeHtml(p.description || '—') + '</span></td>' +
+            '<td>' + sourceBadge + '</td>' +
+            '<td><span style="font-size:0.8rem;">v' + (p.current_version || '—') + '</span></td>' +
+            '<td>' + reacceptBadge + '</td>' +
+            '<td>' + profilesList + '</td>' +
+            '<td style="text-align:right;"><div style="display:flex;gap:var(--space-xs);justify-content:flex-end;"></div></td>';
+
+          var actionsCell = tr.querySelector('td:last-child div');
+
+          if (!isConfig) {
+            var editBtn = document.createElement('button');
+            editBtn.className = 'btn btn-info btn-sm';
+            editBtn.textContent = 'Edit';
+            editBtn.style.fontSize = '0.7rem';
+            editBtn.addEventListener('click', function() { openPolicyEditModal(p.id); });
+            actionsCell.appendChild(editBtn);
+
+            var delBtn = document.createElement('button');
+            delBtn.className = 'btn btn-danger btn-sm';
+            delBtn.textContent = 'Delete';
+            delBtn.style.fontSize = '0.7rem';
+            delBtn.addEventListener('click', function() { openPolicyDeleteModal(p.id, p.name); });
+            actionsCell.appendChild(delBtn);
+          }
+
+          tbody.appendChild(tr);
+        });
+      })
+      .catch(function() {
+        loading.style.display = 'none';
+        empty.style.display = 'block';
+      });
+  }
+
+  // ─── Load and render acceptance records ───
+  function loadAcceptances(userFilter) {
+    var loading = document.getElementById('acceptances-loading');
+    var empty = document.getElementById('acceptances-empty');
+    var wrapper = document.getElementById('acceptances-table-wrapper');
+    var tbody = document.getElementById('acceptances-tbody');
+
+    loading.style.display = 'block';
+    empty.style.display = 'none';
+    wrapper.style.display = 'none';
+
+    var url = '/admin/api/policies/acceptances';
+    if (userFilter) url += '?user=' + encodeURIComponent(userFilter);
+
+    fetch(url)
+      .then(function(r) { return r.json(); })
+      .then(function(acceptances) {
+        loading.style.display = 'none';
+        tbody.innerHTML = '';
+
+        if (acceptances.length === 0) {
+          empty.style.display = 'block';
+          return;
+        }
+
+        wrapper.style.display = 'block';
+
+        acceptances.forEach(function(a) {
+          var tr = document.createElement('tr');
+          tr.innerHTML =
+            '<td>' + escapeHtml(a.user_email) + '</td>' +
+            '<td>' + escapeHtml(a.policy_name || '—') + '</td>' +
+            '<td>v' + (a.version_number || '—') + '</td>' +
+            '<td>' + escapeHtml(a.profile_name || '—') + '</td>' +
+            '<td><span class="text-muted" style="font-size:0.8rem;">' + (a.accepted_at ? new Date(a.accepted_at).toLocaleString() : '—') + '</span></td>';
+          tbody.appendChild(tr);
+        });
+      })
+      .catch(function() {
+        loading.style.display = 'none';
+        empty.style.display = 'block';
+      });
+  }
+
+  // ─── User filter for acceptances ───
+  var acceptancesFilter = document.getElementById('acceptances-user-filter');
+  var acceptancesFilterTimeout = null;
+  if (acceptancesFilter) {
+    acceptancesFilter.addEventListener('input', function() {
+      clearTimeout(acceptancesFilterTimeout);
+      acceptancesFilterTimeout = setTimeout(function() {
+        loadAcceptances(acceptancesFilter.value.trim());
+      }, 300);
+    });
+  }
+
+  // Load policies + acceptances when the policies page becomes active
+  var policiesLink = document.querySelector('.sidebar-link[data-page="page-policies"]');
+  if (policiesLink) {
+    policiesLink.addEventListener('click', function() {
+      loadPolicies();
+      loadAcceptances();
     });
   }
 

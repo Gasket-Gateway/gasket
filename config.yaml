@@ -62,9 +62,20 @@ openai_backends:
     api_key: ""
     skip_tls_verify: true
 
+# Policies (config-defined — read-only in admin panel)
+# These are automatically synced to the database on startup.
+# Config-defined policies always have enforce_reacceptance disabled.
+policies:
+  - name: "acceptable-use"
+    description: "Standard acceptable use policy for internal services"
+    content: |
+      You must use this service responsibly and in accordance with
+      organisational guidelines. Do not share API keys with
+      unauthorised users. All usage is subject to audit logging.
+
 # Backend Profiles (config-defined — read-only in admin panel)
 # These are automatically synced to the database on startup.
-# Backends are referenced by name (must match an openai_backends entry).
+# Backends and policies are referenced by name.
 backend_profiles:
   - name: "internal-standard"
     description: "Standard access to the internal Ollama instance"
@@ -72,7 +83,8 @@ backend_profiles:
       - "gasket-users"
     backends:
       - "ollama-internal"
+    policy_names:
+      - "acceptable-use"
     metadata_audit: true
     content_audit: false
     max_keys_per_user: 5
-

@@ -74,11 +74,20 @@ profile_backends = db.Table(
 )
 
 
+# ── Association table: many-to-many between profiles and policies ──
+
+profile_policies = db.Table(
+    "profile_policies",
+    db.Column("profile_id", db.Integer, db.ForeignKey("backend_profiles.id", ondelete="CASCADE"), primary_key=True),
+    db.Column("policy_id", db.Integer, db.ForeignKey("policies.id", ondelete="CASCADE"), primary_key=True),
+)
+
+
 class BackendProfile(db.Model):
     """A backend profile governing access to one or more OpenAI backends.
 
-    Profiles define policy text, audit settings, expiry rules, quotas,
-    and which OIDC group grants access.
+    Profiles define audit settings, expiry rules, quotas,
+    and which OIDC group grants access. Policies are assigned separately.
     """
 
     __tablename__ = "backend_profiles"
@@ -86,7 +95,6 @@ class BackendProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Text, nullable=False, unique=True)
     description = db.Column(db.Text, nullable=False, server_default="")
-    policy_text = db.Column(db.Text, nullable=False, server_default="")
     oidc_groups = db.Column(db.Text, nullable=False, server_default="")
     source = db.Column(db.Text, nullable=False, server_default="admin")
 
@@ -123,6 +131,13 @@ class BackendProfile(db.Model):
         lazy="selectin",
     )
 
+    policies = db.relationship(
+        "Policy",
+        secondary=profile_policies,
+        backref=db.backref("profiles", lazy="dynamic"),
+        lazy="selectin",
+    )
+
     def to_dict(self):
         """Serialise to a JSON-safe dict."""
         # Split comma-separated groups into a list, filtering blanks
@@ -133,7 +148,6 @@ class BackendProfile(db.Model):
             "id": self.id,
             "name": self.name,
             "description": self.description,
-            "policy_text": self.policy_text,
             "oidc_groups": groups_list,
             "source": self.source,
             "metadata_audit": self.metadata_audit,
@@ -144,9 +158,146 @@ class BackendProfile(db.Model):
             "open_webui_enabled": self.open_webui_enabled,
             "backend_ids": [b.id for b in self.backends],
             "backend_names": [b.name for b in self.backends],
+            "policy_ids": [p.id for p in self.policies],
+            "policy_names": [p.name for p in self.policies],
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
 
     def __repr__(self):
         return f"<BackendProfile {self.name!r}>"
+
+
+class Policy(db.Model):
+    """A policy that users must accept before creating API keys.
+
+    Policies can be created via the admin portal (source='admin') or
+    pre-defined in config.yaml (source='config'). Config-defined policies
+    are read-only and always have enforce_reacceptance=False.
+    """
+
+    __tablename__ = "policies"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.Text, nullable=False, unique=True)
+    description = db.Column(db.Text, nullable=False, server_default="")
+    source = db.Column(db.Text, nullable=False, server_default="admin")
+    enforce_reacceptance = db.Column(db.Boolean, nullable=False, server_default=db.text("false"))
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        server_default=db.func.now(),
+    )
+    updated_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        server_default=db.func.now(),
+        onupdate=db.func.now(),
+    )
+
+    # Relationships
+    versions = db.relationship(
+        "PolicyVersion",
+        backref="policy",
+        lazy="selectin",
+        order_by="PolicyVersion.version_number",
+        cascade="all, delete-orphan",
+    )
+
+    def current_version(self):
+        """Return the latest PolicyVersion, or None."""
+        if self.versions:
+            return self.versions[-1]
+        return None
+
+    def to_dict(self, include_versions=False):
+        """Serialise to a JSON-safe dict."""
+        current = self.current_version()
+        result = {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "source": self.source,
+            "enforce_reacceptance": self.enforce_reacceptance,
+            "current_version": current.version_number if current else None,
+            "current_content": current.content if current else None,
+            "profile_ids": [p.id for p in self.profiles],
+            "profile_names": [p.name for p in self.profiles],
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+        if include_versions:
+            result["versions"] = [v.to_dict() for v in self.versions]
+        return result
+
+    def __repr__(self):
+        return f"<Policy {self.name!r} ({self.source})>"
+
+
+class PolicyVersion(db.Model):
+    """An immutable snapshot of a policy's content at a point in time."""
+
+    __tablename__ = "policy_versions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    policy_id = db.Column(db.Integer, db.ForeignKey("policies.id", ondelete="CASCADE"), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    version_number = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        server_default=db.func.now(),
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint("policy_id", "version_number"),
+    )
+
+    def to_dict(self):
+        """Serialise to a JSON-safe dict."""
+        return {
+            "id": self.id,
+            "policy_id": self.policy_id,
+            "content": self.content,
+            "version_number": self.version_number,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+    def __repr__(self):
+        return f"<PolicyVersion policy_id={self.policy_id} v{self.version_number}>"
+
+
+class PolicyAcceptance(db.Model):
+    """A record of a user accepting a specific policy version for a profile."""
+
+    __tablename__ = "policy_acceptances"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_email = db.Column(db.Text, nullable=False)
+    policy_version_id = db.Column(db.Integer, db.ForeignKey("policy_versions.id"), nullable=False)
+    profile_id = db.Column(db.Integer, db.ForeignKey("backend_profiles.id", ondelete="CASCADE"), nullable=False)
+    accepted_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        server_default=db.func.now(),
+    )
+
+    # Relationships
+    policy_version = db.relationship("PolicyVersion", lazy="selectin")
+    profile = db.relationship("BackendProfile", lazy="selectin")
+
+    def to_dict(self):
+        """Serialise to a JSON-safe dict."""
+        return {
+            "id": self.id,
+            "user_email": self.user_email,
+            "policy_version_id": self.policy_version_id,
+            "policy_name": self.policy_version.policy.name if self.policy_version and self.policy_version.policy else None,
+            "version_number": self.policy_version.version_number if self.policy_version else None,
+            "profile_id": self.profile_id,
+            "profile_name": self.profile.name if self.profile else None,
+            "accepted_at": self.accepted_at.isoformat() if self.accepted_at else None,
+        }
+
+    def __repr__(self):
+        return f"<PolicyAcceptance user={self.user_email!r} version_id={self.policy_version_id}>"

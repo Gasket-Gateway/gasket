@@ -2,7 +2,7 @@
 
 from concurrent.futures import ThreadPoolExecutor
 
-from flask import Blueprint, current_app, jsonify, render_template, request
+from flask import Blueprint, current_app, jsonify, render_template, request, session
 
 from ..auth import login_required, groups_required
 from ..health_checks import (
@@ -287,3 +287,201 @@ def delete_profile_api(profile_id):
 
     current_app.logger.info("Admin deleted profile: %s", profile.name)
     return jsonify({"message": f"Profile '{profile.name}' deleted"})
+
+
+# ─── Policies CRUD ─────────────────────────────────────────────────
+
+
+@admin_bp.route("/admin/api/policies")
+@login_required
+@groups_required("gasket-admins")
+def list_policies_api():
+    """List all policies."""
+    from ..policies import list_policies
+
+    policies = list_policies()
+    return jsonify([p.to_dict() for p in policies])
+
+
+@admin_bp.route("/admin/api/policies", methods=["POST"])
+@login_required
+@groups_required("gasket-admins")
+def create_policy_api():
+    """Create a new policy."""
+    from ..policies import create_policy
+
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Request body must be JSON"}), 400
+
+    name = (data.get("name") or "").strip()
+    if not name:
+        return jsonify({"error": "name is required"}), 400
+
+    content = (data.get("content") or "").strip()
+    if not content:
+        return jsonify({"error": "content is required"}), 400
+
+    try:
+        policy = create_policy(data)
+    except ValueError as e:
+        msg = str(e)
+        if "already exists" in msg:
+            return jsonify({"error": msg}), 409
+        return jsonify({"error": msg}), 400
+
+    current_app.logger.info("Admin created policy: %s", name)
+    return jsonify(policy.to_dict(include_versions=True)), 201
+
+
+@admin_bp.route("/admin/api/policies/<int:policy_id>")
+@login_required
+@groups_required("gasket-admins")
+def get_policy_api(policy_id):
+    """Get a single policy with all versions."""
+    from ..policies import get_policy
+
+    policy = get_policy(policy_id)
+    if not policy:
+        return jsonify({"error": "Policy not found"}), 404
+
+    return jsonify(policy.to_dict(include_versions=True))
+
+
+@admin_bp.route("/admin/api/policies/<int:policy_id>", methods=["PUT"])
+@login_required
+@groups_required("gasket-admins")
+def update_policy_api(policy_id):
+    """Update a policy."""
+    from ..policies import get_policy, update_policy
+
+    # Guard: config-defined policies are read-only
+    policy = get_policy(policy_id)
+    if not policy:
+        return jsonify({"error": "Policy not found"}), 404
+    if policy.source == "config":
+        return jsonify({"error": "Config-defined policies cannot be modified"}), 403
+
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Request body must be JSON"}), 400
+
+    try:
+        policy = update_policy(policy_id, data)
+    except ValueError as e:
+        msg = str(e)
+        if "not found" in msg.lower() and "policy" in msg.lower():
+            return jsonify({"error": msg}), 404
+        if "already exists" in msg:
+            return jsonify({"error": msg}), 409
+        return jsonify({"error": msg}), 400
+
+    current_app.logger.info("Admin updated policy: %s", policy.name)
+    return jsonify(policy.to_dict(include_versions=True))
+
+
+@admin_bp.route("/admin/api/policies/<int:policy_id>", methods=["DELETE"])
+@login_required
+@groups_required("gasket-admins")
+def delete_policy_api(policy_id):
+    """Delete a policy."""
+    from ..policies import get_policy, delete_policy
+
+    policy = get_policy(policy_id)
+    if not policy:
+        return jsonify({"error": "Policy not found"}), 404
+    if policy.source == "config":
+        return jsonify({"error": "Config-defined policies cannot be deleted"}), 403
+
+    delete_policy(policy_id)
+
+    current_app.logger.info("Admin deleted policy: %s", policy.name)
+    return jsonify({"message": f"Policy '{policy.name}' deleted"})
+
+
+@admin_bp.route("/admin/api/policies/<int:policy_id>/versions")
+@login_required
+@groups_required("gasket-admins")
+def policy_versions_api(policy_id):
+    """List all versions for a policy."""
+    from ..policies import get_policy, get_policy_versions
+
+    policy = get_policy(policy_id)
+    if not policy:
+        return jsonify({"error": "Policy not found"}), 404
+
+    versions = get_policy_versions(policy_id)
+    return jsonify([v.to_dict() for v in versions])
+
+
+# ─── Policy Acceptance ─────────────────────────────────────────────
+
+
+@admin_bp.route("/admin/api/policies/<int:policy_id>/accept", methods=["POST"])
+@login_required
+def accept_policy_api(policy_id):
+    """Accept a policy for a profile."""
+    from ..policies import accept_policy
+
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Request body must be JSON"}), 400
+
+    profile_id = data.get("profile_id")
+    if not profile_id:
+        return jsonify({"error": "profile_id is required"}), 400
+
+    user_email = session.get("user_email")
+    if not user_email:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    try:
+        acceptance = accept_policy(user_email, policy_id, profile_id)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+    current_app.logger.info(
+        "User %s accepted policy %d for profile %d", user_email, policy_id, profile_id
+    )
+    return jsonify(acceptance.to_dict()), 201
+
+
+@admin_bp.route("/admin/api/policies/acceptances/check/<int:profile_id>")
+@login_required
+def check_policies_api(profile_id):
+    """Check if current user has accepted all policies for a profile."""
+    from ..policies import check_all_policies_accepted
+
+    user_email = session.get("user_email")
+    if not user_email:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    result = check_all_policies_accepted(user_email, profile_id)
+    return jsonify(result)
+
+
+@admin_bp.route("/admin/api/policies/acceptances")
+@login_required
+@groups_required("gasket-admins")
+def list_acceptances_api():
+    """List all policy acceptances (admin view). Supports ?user= filter."""
+    from ..policies import get_all_acceptances
+
+    user_email = request.args.get("user")
+    acceptances = get_all_acceptances(user_email=user_email)
+    return jsonify([a.to_dict() for a in acceptances])
+
+
+@admin_bp.route("/admin/api/policies/my-acceptances")
+@login_required
+def my_acceptances_api():
+    """List current user's policy acceptances."""
+    from ..policies import get_user_acceptances
+
+    user_email = session.get("user_email")
+    if not user_email:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    profile_id = request.args.get("profile_id", type=int)
+    acceptances = get_user_acceptances(user_email, profile_id=profile_id)
+    return jsonify([a.to_dict() for a in acceptances])

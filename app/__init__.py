@@ -72,6 +72,11 @@ def create_app(config_path=None):
 
     seed_config_backends(app)
 
+    # Seed config-defined policies into the database
+    from .policies import seed_config_policies
+
+    seed_config_policies(app)
+
     # Seed config-defined backend profiles into the database
     from .profiles import seed_config_profiles
 

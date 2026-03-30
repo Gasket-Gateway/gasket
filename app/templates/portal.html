@@ -6,35 +6,242 @@
 <h1 class="page-title">Portal</h1>
 <p>Welcome, <strong>{{ session.get('user_name', 'User') }}</strong>. This is the main portal for managing your AI backend access.</p>
 
-<div class="grid grid-3" style="margin-top: var(--space-xl);">
-  <div class="card card-accent-blue">
-    <div class="card-header">Backend Profiles</div>
-    <div class="card-body">
-      <p>View and accept policies for your available backend profiles. Manage connections to OpenAI-compliant backends.</p>
-    </div>
-    <div class="card-footer">
-      <span class="badge badge-info">Coming Soon</span>
-    </div>
-  </div>
+<!-- ═══ Backend Profiles ═══ -->
+<h2 style="margin-top: var(--space-xl);">Your Backend Profiles</h2>
+<p class="text-muted">View your available backend profiles, accept required policies, and manage API keys.</p>
 
-  <div class="card card-accent-purple">
-    <div class="card-header">API Keys</div>
-    <div class="card-body">
-      <p>Create, view, and manage your API keys. Configure VSCode Continue integration and Open WebUI header support.</p>
-    </div>
-    <div class="card-footer">
-      <span class="badge badge-info">Coming Soon</span>
-    </div>
-  </div>
+<div id="portal-profiles-loading" class="text-muted" style="padding: var(--space-lg); text-align: center;">Loading profiles…</div>
 
-  <div class="card card-accent-green">
-    <div class="card-header">Usage & Quotas</div>
-    <div class="card-body">
-      <p>Monitor your token usage, API call metrics, and quota consumption across all your backend profiles.</p>
+<div id="portal-profiles-empty" style="display: none; padding: var(--space-lg); text-align: center;">
+  <p class="text-muted">No backend profiles are available for your account.</p>
+</div>
+
+<div id="portal-profiles" style="display: none; margin-top: var(--space-lg);"></div>
+
+<!-- ═══ Policy Acceptance Modal ═══ -->
+<div class="modal-overlay" id="portal-policy-modal" role="dialog" aria-modal="true" aria-labelledby="portal-policy-modal-title">
+  <div class="modal" style="max-width: 640px;">
+    <div class="modal-header">
+      <h3 id="portal-policy-modal-title">Accept Policy</h3>
+      <button class="modal-close" id="portal-policy-modal-close" aria-label="Close dialog">✕</button>
     </div>
-    <div class="card-footer">
-      <span class="badge badge-info">Coming Soon</span>
+    <div style="margin-bottom: var(--space-md);">
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: var(--space-sm);">Please read and accept the following policy:</p>
+      <h4 id="portal-policy-name" style="margin-bottom: var(--space-xs);"></h4>
+      <p id="portal-policy-desc" class="text-muted" style="font-size: 0.85rem; margin-bottom: var(--space-md);"></p>
+      <div id="portal-policy-content" style="background: var(--bg-secondary); border: 2px solid var(--border-color); border-radius: var(--radius-sm); padding: var(--space-md); max-height: 300px; overflow-y: auto; font-size: 0.9rem; white-space: pre-wrap;"></div>
+    </div>
+    <div id="portal-policy-error" style="display: none; color: var(--accent-danger); margin-bottom: var(--space-sm); font-size: 0.85rem;"></div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline btn-sm" id="portal-policy-cancel">Cancel</button>
+      <button type="button" class="btn btn-primary btn-sm" id="portal-policy-accept">I Accept</button>
     </div>
   </div>
 </div>
+
+<script>
+(function() {
+  "use strict";
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  var currentAcceptPolicyId = null;
+  var currentAcceptProfileId = null;
+
+  // ─── Load profiles ───
+  function loadPortalProfiles() {
+    var loading = document.getElementById('portal-profiles-loading');
+    var empty = document.getElementById('portal-profiles-empty');
+    var container = document.getElementById('portal-profiles');
+
+    loading.style.display = 'block';
+    empty.style.display = 'none';
+    container.style.display = 'none';
+    container.innerHTML = '';
+
+    fetch('/admin/api/profiles')
+      .then(function(r) { return r.json(); })
+      .then(function(profiles) {
+        loading.style.display = 'none';
+
+        if (profiles.length === 0) {
+          empty.style.display = 'block';
+          return;
+        }
+
+        container.style.display = 'block';
+
+        // For each profile, check policy acceptance status
+        var checkPromises = profiles.map(function(p) {
+          return fetch('/admin/api/policies/acceptances/check/' + p.id)
+            .then(function(r) { return r.json(); })
+            .then(function(status) {
+              return { profile: p, policies: status };
+            });
+        });
+
+        Promise.all(checkPromises).then(function(results) {
+          results.forEach(function(result) {
+            var p = result.profile;
+            var policyStatus = result.policies;
+
+            var card = document.createElement('div');
+            card.className = 'card';
+            card.style.marginBottom = 'var(--space-md)';
+
+            var hasPolicies = (policyStatus.accepted && policyStatus.accepted.length > 0) || (policyStatus.pending && policyStatus.pending.length > 0);
+
+            var headerHtml = '<div class="card-header" style="display: flex; align-items: center; justify-content: space-between;">' +
+              '<div>' +
+                '<strong>' + escapeHtml(p.name) + '</strong>' +
+                (p.source === 'config' ? ' <span class="badge badge-info" style="font-size:0.65rem;">config</span>' : '') +
+              '</div>' +
+              '<div>' +
+                (policyStatus.all_accepted
+                  ? '<span class="badge badge-success" style="font-size:0.7rem;">✓ All policies accepted</span>'
+                  : (hasPolicies ? '<span class="badge badge-warning" style="font-size:0.7rem;">⚠ Policies pending</span>' : '<span class="badge badge-success" style="font-size:0.7rem;">✓ No policies required</span>')) +
+              '</div>' +
+            '</div>';
+
+            var bodyHtml = '<div class="card-body">';
+            if (p.description) {
+              bodyHtml += '<p class="text-muted" style="font-size: 0.85rem; margin-bottom: var(--space-md);">' + escapeHtml(p.description) + '</p>';
+            }
+
+            // Policy acceptance section
+            if (hasPolicies) {
+              bodyHtml += '<div style="margin-bottom: var(--space-sm);">';
+              bodyHtml += '<p style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: var(--space-xs); font-weight: 600;">Policies</p>';
+
+              // Accepted policies
+              if (policyStatus.accepted && policyStatus.accepted.length > 0) {
+                policyStatus.accepted.forEach(function(ap) {
+                  bodyHtml += '<div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-xs);">' +
+                    '<span class="status-dot status-connected" style="flex-shrink:0;"></span>' +
+                    '<span style="font-size:0.85rem;">' + escapeHtml(ap.policy_name) + ' (v' + ap.version_number + ')</span>' +
+                    '<span class="text-muted" style="font-size:0.75rem;">accepted ' + (ap.accepted_at ? new Date(ap.accepted_at).toLocaleDateString() : '') + '</span>' +
+                  '</div>';
+                });
+              }
+
+              // Pending policies
+              if (policyStatus.pending && policyStatus.pending.length > 0) {
+                policyStatus.pending.forEach(function(pp) {
+                  var acceptBtnId = 'accept-' + p.id + '-' + pp.policy_id;
+                  bodyHtml += '<div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-xs);">' +
+                    '<span class="status-dot status-error" style="flex-shrink:0;"></span>' +
+                    '<span style="font-size:0.85rem;">' + escapeHtml(pp.policy_name) + '</span>' +
+                    '<button class="btn btn-primary btn-sm" style="font-size:0.7rem; padding:2px 8px;" id="' + acceptBtnId + '" data-policy-id="' + pp.policy_id + '" data-profile-id="' + p.id + '">Review & Accept</button>' +
+                  '</div>';
+                });
+              }
+              bodyHtml += '</div>';
+            }
+
+            bodyHtml += '</div>';
+
+            // Footer
+            var footerHtml = '<div class="card-footer" style="display: flex; gap: var(--space-xs); align-items: center;">';
+            footerHtml += '<span class="text-muted" style="font-size: 0.8rem;">Backends: ' + (p.backend_names && p.backend_names.length > 0 ? escapeHtml(p.backend_names.join(', ')) : 'None') + '</span>';
+            footerHtml += '<span style="flex:1;"></span>';
+            footerHtml += '<span class="text-muted" style="font-size: 0.8rem;">Max ' + p.max_keys_per_user + ' keys</span>';
+            footerHtml += '</div>';
+
+            card.innerHTML = headerHtml + bodyHtml + footerHtml;
+            container.appendChild(card);
+
+            // Bind accept buttons
+            if (policyStatus.pending && policyStatus.pending.length > 0) {
+              policyStatus.pending.forEach(function(pp) {
+                var btn = document.getElementById('accept-' + p.id + '-' + pp.policy_id);
+                if (btn) {
+                  btn.addEventListener('click', function() {
+                    openPolicyAcceptModal(pp.policy_id, p.id);
+                  });
+                }
+              });
+            }
+          });
+        });
+      })
+      .catch(function() {
+        loading.style.display = 'none';
+        empty.style.display = 'block';
+      });
+  }
+
+  // ─── Policy acceptance modal ───
+  var policyAcceptModal = document.getElementById('portal-policy-modal');
+  var policyAcceptBtn = document.getElementById('portal-policy-accept');
+  var policyAcceptError = document.getElementById('portal-policy-error');
+
+  function openPolicyAcceptModal(policyId, profileId) {
+    currentAcceptPolicyId = policyId;
+    currentAcceptProfileId = profileId;
+    policyAcceptError.style.display = 'none';
+    policyAcceptBtn.disabled = false;
+    policyAcceptBtn.textContent = 'I Accept';
+
+    // Fetch policy details
+    fetch('/admin/api/policies/' + policyId)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        document.getElementById('portal-policy-name').textContent = data.name + (data.current_version ? ' (v' + data.current_version + ')' : '');
+        document.getElementById('portal-policy-desc').textContent = data.description || '';
+        document.getElementById('portal-policy-content').textContent = data.current_content || 'No content available.';
+        policyAcceptModal.classList.add('active');
+      })
+      .catch(function() {
+        alert('Failed to load policy details.');
+      });
+  }
+
+  function closePolicyAcceptModal() {
+    policyAcceptModal.classList.remove('active');
+    currentAcceptPolicyId = null;
+    currentAcceptProfileId = null;
+  }
+
+  document.getElementById('portal-policy-modal-close').addEventListener('click', closePolicyAcceptModal);
+  document.getElementById('portal-policy-cancel').addEventListener('click', closePolicyAcceptModal);
+  policyAcceptModal.addEventListener('click', function(e) {
+    if (e.target === policyAcceptModal) closePolicyAcceptModal();
+  });
+
+  policyAcceptBtn.addEventListener('click', function() {
+    if (!currentAcceptPolicyId || !currentAcceptProfileId) return;
+
+    policyAcceptBtn.disabled = true;
+    policyAcceptBtn.textContent = 'Accepting…';
+    policyAcceptError.style.display = 'none';
+
+    fetch('/admin/api/policies/' + currentAcceptPolicyId + '/accept', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profile_id: currentAcceptProfileId })
+    })
+      .then(function(res) {
+        if (!res.ok) return res.json().then(function(d) { throw new Error(d.error || 'Accept failed'); });
+        return res.json();
+      })
+      .then(function() {
+        closePolicyAcceptModal();
+        loadPortalProfiles();
+      })
+      .catch(function(err) {
+        policyAcceptError.textContent = err.message;
+        policyAcceptError.style.display = 'block';
+        policyAcceptBtn.disabled = false;
+        policyAcceptBtn.textContent = 'I Accept';
+      });
+  });
+
+  // Load on page ready
+  loadPortalProfiles();
+})();
+</script>
 {% endblock %}

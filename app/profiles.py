@@ -6,7 +6,7 @@ the SQLAlchemy session from app.models.db.
 
 import logging
 
-from .models import db, BackendProfile, OpenAIBackend
+from .models import db, BackendProfile, OpenAIBackend, Policy
 
 logger = logging.getLogger(__name__)
 
@@ -37,10 +37,10 @@ def create_profile(data):
 
     Args:
         data: dict with profile fields. Required: name.
-              Optional: description, policy_text, oidc_groups,
+              Optional: description, oidc_groups,
               metadata_audit, content_audit, default_expiry_days,
               enforce_expiry, max_keys_per_user, open_webui_enabled,
-              backend_ids (list of int).
+              backend_ids (list of int), policy_ids (list of int).
 
     Returns:
         The created BackendProfile instance.
@@ -62,7 +62,6 @@ def create_profile(data):
     profile = BackendProfile(
         name=name,
         description=data.get("description", ""),
-        policy_text=data.get("policy_text", ""),
         oidc_groups=oidc_groups,
         metadata_audit=data.get("metadata_audit", True),
         content_audit=data.get("content_audit", False),
@@ -81,6 +80,16 @@ def create_profile(data):
         if missing:
             raise ValueError(f"Backend IDs not found: {sorted(missing)}")
         profile.backends = backends
+
+    # Attach policies
+    policy_ids = data.get("policy_ids", [])
+    if policy_ids:
+        policies = Policy.query.filter(Policy.id.in_(policy_ids)).all()
+        found_ids = {p.id for p in policies}
+        missing = set(policy_ids) - found_ids
+        if missing:
+            raise ValueError(f"Policy IDs not found: {sorted(missing)}")
+        profile.policies = policies
 
     db.session.add(profile)
     db.session.commit()
@@ -118,7 +127,7 @@ def update_profile(profile_id, data):
             raise ValueError(f"Profile with name '{new_name}' already exists")
 
     allowed_scalars = {
-        "name", "description", "policy_text",
+        "name", "description",
         "metadata_audit", "content_audit", "default_expiry_days",
         "enforce_expiry", "max_keys_per_user", "open_webui_enabled",
     }
@@ -143,6 +152,19 @@ def update_profile(profile_id, data):
             profile.backends = backends
         else:
             profile.backends = []
+
+    # Update policy associations if provided
+    if "policy_ids" in data:
+        policy_ids = data["policy_ids"]
+        if policy_ids:
+            policies = Policy.query.filter(Policy.id.in_(policy_ids)).all()
+            found_ids = {p.id for p in policies}
+            missing = set(policy_ids) - found_ids
+            if missing:
+                raise ValueError(f"Policy IDs not found: {sorted(missing)}")
+            profile.policies = policies
+        else:
+            profile.policies = []
 
     db.session.commit()
     return profile
@@ -224,11 +246,26 @@ def seed_config_profiles(app):
 
             oidc_groups = _normalise_oidc_groups(entry.get("oidc_groups", ""))
 
+            # Resolve policy associations by name
+            policy_names = entry.get("policy_names", [])
+            policies = []
+            if policy_names:
+                policies = Policy.query.filter(
+                    Policy.name.in_(policy_names)
+                ).all()
+                found_policy_names = {p.name for p in policies}
+                missing_policies = set(policy_names) - found_policy_names
+                if missing_policies:
+                    logger.warning(
+                        "Config profile '%s' references unknown policies: %s — skipping them",
+                        name,
+                        sorted(missing_policies),
+                    )
+
             if existing:
                 if existing.source == "config":
                     # Update config-sourced profile to match config
                     existing.description = entry.get("description", existing.description)
-                    existing.policy_text = entry.get("policy_text", existing.policy_text)
                     existing.oidc_groups = oidc_groups or existing.oidc_groups
                     existing.metadata_audit = entry.get("metadata_audit", existing.metadata_audit)
                     existing.content_audit = entry.get("content_audit", existing.content_audit)
@@ -238,6 +275,8 @@ def seed_config_profiles(app):
                     existing.open_webui_enabled = entry.get("open_webui_enabled", existing.open_webui_enabled)
                     if backend_names:
                         existing.backends = backends
+                    if policy_names:
+                        existing.policies = policies
                     logger.info("Updated config profile: %s", name)
                 else:
                     logger.warning(
@@ -248,7 +287,6 @@ def seed_config_profiles(app):
                 profile = BackendProfile(
                     name=name,
                     description=entry.get("description", ""),
-                    policy_text=entry.get("policy_text", ""),
                     oidc_groups=oidc_groups,
                     source="config",
                     metadata_audit=entry.get("metadata_audit", True),
@@ -259,6 +297,7 @@ def seed_config_profiles(app):
                     open_webui_enabled=entry.get("open_webui_enabled", False),
                 )
                 profile.backends = backends
+                profile.policies = policies
                 db.session.add(profile)
                 logger.info("Seeded config profile: %s", name)
 

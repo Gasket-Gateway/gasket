@@ -36,6 +36,7 @@ DEFAULTS = {
         "url": "http://localhost:9200",
         "skip_tls_verify": False,
     },
+    "policies": [],
     "backend_profiles": [],
     "openai_backends": [],
 }

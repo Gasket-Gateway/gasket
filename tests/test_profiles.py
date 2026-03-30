@@ -30,7 +30,6 @@ class TestProfilesCreate:
                 "name": "test-profile-1",
                 "oidc_groups": ["gasket-users", "gasket-admins"],
                 "description": "Standard access\nWith multi-line support",
-                "policy_text": "Do not abuse\nBe responsible",
                 "metadata_audit": True,
                 "content_audit": False,
                 "max_keys_per_user": 3,
