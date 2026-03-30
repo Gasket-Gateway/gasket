@@ -148,10 +148,64 @@
 
     <!-- ═══ API Key Management Page ═══ -->
     <div id="page-keys" class="admin-page">
-      <h2>API Key Management</h2>
-      <p>List all API keys across all users. View usage metrics, quotas, and block statuses. Revoke or restore keys.</p>
-      <div style="margin-top: var(--space-lg);">
-        <span class="badge badge-info">Coming Soon</span>
+      <div class="flex" style="align-items: center; justify-content: space-between; margin-bottom: var(--space-md);">
+        <div>
+          <h2 style="margin-bottom: 0;">API Keys</h2>
+          <p class="text-muted" style="margin-top: var(--space-xs);">View all API keys across all users. Revoke or restore keys. View accepted policy snapshots.</p>
+        </div>
+        <button class="btn btn-outline btn-sm" id="btn-refresh-keys">↻ Refresh</button>
+      </div>
+
+      <div style="display: flex; gap: var(--space-md); margin-bottom: var(--space-md); flex-wrap: wrap;">
+        <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px; max-width: 300px;">
+          <input type="text" class="form-input" id="admin-keys-user-filter" placeholder="Filter by user email…">
+        </div>
+        <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px; max-width: 300px;">
+          <select class="form-select" id="admin-keys-profile-filter">
+            <option value="">All profiles</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="admin-keys-loading" class="text-muted" style="padding: var(--space-lg); text-align: center;">Loading keys…</div>
+
+      <div id="admin-keys-empty" style="display: none; padding: var(--space-lg); text-align: center;">
+        <p class="text-muted">No API keys found.</p>
+      </div>
+
+      <div class="table-wrapper" id="admin-keys-table-wrapper" style="display: none;">
+        <table class="table" id="admin-keys-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Name</th>
+              <th>Key</th>
+              <th>Profile</th>
+              <th>Status</th>
+              <th>Expires</th>
+              <th>Created</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="admin-keys-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══ Admin Key Policy Snapshots Modal ═══ -->
+    <div class="modal-overlay" id="admin-key-snapshots-modal" role="dialog" aria-modal="true" aria-labelledby="admin-key-snapshots-title">
+      <div class="modal" style="max-width: 560px;">
+        <div class="modal-header">
+          <h3 id="admin-key-snapshots-title">Policy Snapshots</h3>
+          <button class="modal-close" id="admin-key-snapshots-close" aria-label="Close dialog">✕</button>
+        </div>
+        <div>
+          <p class="text-muted" style="font-size: 0.85rem; margin-bottom: var(--space-md);">Policy versions that were accepted when this API key was created.</p>
+          <div id="admin-key-snapshots-content"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline btn-sm" id="admin-key-snapshots-done">Close</button>
+        </div>
       </div>
     </div>
 
@@ -1805,6 +1859,203 @@
     policiesLink.addEventListener('click', function() {
       loadPolicies();
       loadAcceptances();
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  //  Admin API Keys Management
+  // ═══════════════════════════════════════════════════════════════
+
+  var adminKeysSnapshotsModal = document.getElementById('admin-key-snapshots-modal');
+
+  function closeSnapshotsModal() {
+    adminKeysSnapshotsModal.classList.remove('active');
+  }
+  document.getElementById('admin-key-snapshots-close').addEventListener('click', closeSnapshotsModal);
+  document.getElementById('admin-key-snapshots-done').addEventListener('click', closeSnapshotsModal);
+  adminKeysSnapshotsModal.addEventListener('click', function(e) {
+    if (e.target === adminKeysSnapshotsModal) closeSnapshotsModal();
+  });
+
+  function openSnapshotsModal(keyId, keyName) {
+    document.getElementById('admin-key-snapshots-title').textContent = 'Policy Snapshots — ' + keyName;
+    var content = document.getElementById('admin-key-snapshots-content');
+    content.innerHTML = '<p class="text-muted" style="font-size:0.85rem;">Loading…</p>';
+    adminKeysSnapshotsModal.classList.add('active');
+
+    fetch('/admin/api/keys/' + keyId + '/policies')
+      .then(function(r) { return r.json(); })
+      .then(function(snapshots) {
+        if (snapshots.length === 0) {
+          content.innerHTML = '<p class="text-muted" style="font-size:0.85rem;">No policy snapshots recorded for this key.</p>';
+          return;
+        }
+        var html = '<table class="table" style="font-size:0.85rem;"><thead><tr><th>Policy</th><th>Version</th></tr></thead><tbody>';
+        snapshots.forEach(function(s) {
+          html += '<tr>' +
+            '<td>' + escapeHtml(s.policy_name || '—') + '</td>' +
+            '<td>v' + s.version_number + '</td>' +
+            '</tr>';
+        });
+        html += '</tbody></table>';
+        content.innerHTML = html;
+      })
+      .catch(function() {
+        content.innerHTML = '<p class="text-danger" style="font-size:0.85rem;">Failed to load snapshots.</p>';
+      });
+  }
+
+  function getKeyStatusBadge(key) {
+    if (key.revoked) return '<span class="badge badge-danger" style="font-size:0.7rem;">Revoked</span>';
+    if (key.is_expired) return '<span class="badge badge-warning" style="font-size:0.7rem;">Expired</span>';
+    return '<span class="badge badge-success" style="font-size:0.7rem;">Active</span>';
+  }
+
+  function loadAdminKeys() {
+    var loading = document.getElementById('admin-keys-loading');
+    var empty = document.getElementById('admin-keys-empty');
+    var wrapper = document.getElementById('admin-keys-table-wrapper');
+    var tbody = document.getElementById('admin-keys-tbody');
+
+    loading.style.display = 'block';
+    empty.style.display = 'none';
+    wrapper.style.display = 'none';
+
+    var userFilter = document.getElementById('admin-keys-user-filter').value.trim();
+    var profileFilter = document.getElementById('admin-keys-profile-filter').value;
+
+    var params = [];
+    if (userFilter) params.push('user=' + encodeURIComponent(userFilter));
+    if (profileFilter) params.push('profile_id=' + profileFilter);
+    var url = '/admin/api/keys' + (params.length ? '?' + params.join('&') : '');
+
+    fetch(url)
+      .then(function(r) { return r.json(); })
+      .then(function(keys) {
+        loading.style.display = 'none';
+        tbody.innerHTML = '';
+
+        if (keys.length === 0) {
+          empty.style.display = 'block';
+          return;
+        }
+
+        wrapper.style.display = 'block';
+
+        keys.forEach(function(k) {
+          var tr = document.createElement('tr');
+          tr.innerHTML =
+            '<td>' + escapeHtml(k.user_email) + '</td>' +
+            '<td><strong>' + escapeHtml(k.name) + '</strong></td>' +
+            '<td><code style="font-size:0.8rem;">' + escapeHtml(k.key_preview) + '</code></td>' +
+            '<td><span class="badge badge-outline" style="font-size:0.7rem;">' + escapeHtml(k.profile_name || '—') + '</span></td>' +
+            '<td>' + getKeyStatusBadge(k) + '</td>' +
+            '<td><span class="text-muted" style="font-size:0.8rem;">' + (k.expires_at ? new Date(k.expires_at).toLocaleDateString() : '—') + '</span></td>' +
+            '<td><span class="text-muted" style="font-size:0.8rem;">' + (k.created_at ? new Date(k.created_at).toLocaleDateString() : '—') + '</span></td>' +
+            '<td style="text-align:right;"><div style="display:flex;gap:var(--space-xs);justify-content:flex-end;"></div></td>';
+
+          var actionsCell = tr.querySelector('td:last-child div');
+
+          // Snapshots button
+          var snapBtn = document.createElement('button');
+          snapBtn.className = 'btn btn-outline btn-sm';
+          snapBtn.textContent = '📋';
+          snapBtn.title = 'View policy snapshots';
+          snapBtn.style.fontSize = '0.7rem';
+          snapBtn.addEventListener('click', function() { openSnapshotsModal(k.id, k.name); });
+          actionsCell.appendChild(snapBtn);
+
+          if (k.revoked) {
+            // Restore button — disabled if expired
+            var restoreBtn = document.createElement('button');
+            restoreBtn.className = 'btn btn-primary btn-sm';
+            restoreBtn.textContent = 'Restore';
+            restoreBtn.style.fontSize = '0.7rem';
+            if (k.is_expired) {
+              restoreBtn.disabled = true;
+              restoreBtn.title = 'Cannot restore expired keys';
+            }
+            restoreBtn.addEventListener('click', function() {
+              restoreBtn.disabled = true;
+              restoreBtn.textContent = '…';
+              fetch('/admin/api/keys/' + k.id + '/restore', { method: 'POST' })
+                .then(function(res) {
+                  if (!res.ok) return res.json().then(function(d) { throw new Error(d.error); });
+                  loadAdminKeys();
+                })
+                .catch(function(err) {
+                  alert('Restore failed: ' + err.message);
+                  restoreBtn.disabled = false;
+                  restoreBtn.textContent = 'Restore';
+                });
+            });
+            actionsCell.appendChild(restoreBtn);
+          } else {
+            // Revoke button
+            var revokeBtn = document.createElement('button');
+            revokeBtn.className = 'btn btn-danger btn-sm';
+            revokeBtn.textContent = 'Revoke';
+            revokeBtn.style.fontSize = '0.7rem';
+            revokeBtn.addEventListener('click', function() {
+              revokeBtn.disabled = true;
+              revokeBtn.textContent = '…';
+              fetch('/admin/api/keys/' + k.id + '/revoke', { method: 'POST' })
+                .then(function(res) {
+                  if (!res.ok) return res.json().then(function(d) { throw new Error(d.error); });
+                  loadAdminKeys();
+                })
+                .catch(function(err) {
+                  alert('Revoke failed: ' + err.message);
+                  revokeBtn.disabled = false;
+                  revokeBtn.textContent = 'Revoke';
+                });
+            });
+            actionsCell.appendChild(revokeBtn);
+          }
+
+          tbody.appendChild(tr);
+        });
+      })
+      .catch(function() {
+        loading.style.display = 'none';
+        empty.style.display = 'block';
+      });
+  }
+
+  // Populate profile filter dropdown
+  function populateAdminKeysProfileFilter() {
+    var select = document.getElementById('admin-keys-profile-filter');
+    var current = select.value;
+    fetch('/admin/api/profiles')
+      .then(function(r) { return r.json(); })
+      .then(function(profiles) {
+        // Keep the "All profiles" option
+        select.innerHTML = '<option value="">All profiles</option>';
+        profiles.forEach(function(p) {
+          var opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = p.name;
+          if (String(p.id) === current) opt.selected = true;
+          select.appendChild(opt);
+        });
+      });
+  }
+
+  // Filter debounce
+  var adminKeysFilterTimeout = null;
+  document.getElementById('admin-keys-user-filter').addEventListener('input', function() {
+    clearTimeout(adminKeysFilterTimeout);
+    adminKeysFilterTimeout = setTimeout(loadAdminKeys, 300);
+  });
+  document.getElementById('admin-keys-profile-filter').addEventListener('change', loadAdminKeys);
+  document.getElementById('btn-refresh-keys').addEventListener('click', loadAdminKeys);
+
+  // Load keys when the keys page becomes active
+  var keysLink = document.querySelector('.sidebar-link[data-page="page-keys"]');
+  if (keysLink) {
+    keysLink.addEventListener('click', function() {
+      populateAdminKeysProfileFilter();
+      loadAdminKeys();
     });
   }
 

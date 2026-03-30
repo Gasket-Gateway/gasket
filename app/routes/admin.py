@@ -485,3 +485,83 @@ def my_acceptances_api():
     profile_id = request.args.get("profile_id", type=int)
     acceptances = get_user_acceptances(user_email, profile_id=profile_id)
     return jsonify([a.to_dict() for a in acceptances])
+
+
+# ─── API Key Management (Admin) ───────────────────────────────────
+
+
+@admin_bp.route("/admin/api/keys")
+@login_required
+@groups_required("gasket-admins")
+def list_keys_api():
+    """List all API keys. Supports ?user= and ?profile_id= filters."""
+    from ..api_keys import list_all_keys
+
+    user_email = request.args.get("user")
+    profile_id = request.args.get("profile_id", type=int)
+    keys = list_all_keys(user_email=user_email, profile_id=profile_id)
+    # Admin routes never reveal the full key value
+    return jsonify([k.to_dict(reveal_key=False) for k in keys])
+
+
+@admin_bp.route("/admin/api/keys/<int:key_id>")
+@login_required
+@groups_required("gasket-admins")
+def get_key_api(key_id):
+    """Get a single API key (masked value)."""
+    from ..api_keys import get_api_key
+
+    key = get_api_key(key_id)
+    if not key:
+        return jsonify({"error": "API key not found"}), 404
+
+    return jsonify(key.to_dict(reveal_key=False))
+
+
+@admin_bp.route("/admin/api/keys/<int:key_id>/revoke", methods=["POST"])
+@login_required
+@groups_required("gasket-admins")
+def admin_revoke_key(key_id):
+    """Admin revoke an API key."""
+    from ..api_keys import revoke_api_key
+
+    admin_email = session.get("user_email")
+    try:
+        key = revoke_api_key(key_id, admin_email)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+    current_app.logger.info("Admin %s revoked API key %d", admin_email, key_id)
+    return jsonify(key.to_dict(reveal_key=False))
+
+
+@admin_bp.route("/admin/api/keys/<int:key_id>/restore", methods=["POST"])
+@login_required
+@groups_required("gasket-admins")
+def admin_restore_key(key_id):
+    """Admin restore a revoked API key (not allowed for expired keys)."""
+    from ..api_keys import restore_api_key
+
+    try:
+        key = restore_api_key(key_id)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+    current_app.logger.info("Admin restored API key %d", key_id)
+    return jsonify(key.to_dict(reveal_key=False))
+
+
+@admin_bp.route("/admin/api/keys/<int:key_id>/policies")
+@login_required
+@groups_required("gasket-admins")
+def admin_key_policies(key_id):
+    """View policy version snapshots for any API key."""
+    from ..api_keys import get_api_key, get_key_policy_snapshots
+
+    key = get_api_key(key_id)
+    if not key:
+        return jsonify({"error": "API key not found"}), 404
+
+    snapshots = get_key_policy_snapshots(key_id)
+    return jsonify(snapshots)
+

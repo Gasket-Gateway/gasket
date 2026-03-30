@@ -301,3 +301,97 @@ class PolicyAcceptance(db.Model):
 
     def __repr__(self):
         return f"<PolicyAcceptance user={self.user_email!r} version_id={self.policy_version_id}>"
+
+
+# ── Association table: many-to-many between api_keys and policy_versions (snapshot) ──
+
+api_key_policy_snapshots = db.Table(
+    "api_key_policy_snapshots",
+    db.Column("api_key_id", db.Integer, db.ForeignKey("api_keys.id", ondelete="CASCADE"), primary_key=True),
+    db.Column("policy_version_id", db.Integer, db.ForeignKey("policy_versions.id"), primary_key=True),
+)
+
+
+class ApiKey(db.Model):
+    """A user-created API key scoped to a backend profile.
+
+    Keys are generated with a ``gsk_`` prefix and stored in the database
+    so that users can reveal them later.  Admin routes always mask the
+    value.  Each key snapshots the policy versions that were accepted at
+    the time of creation.
+    """
+
+    __tablename__ = "api_keys"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_email = db.Column(db.Text, nullable=False)
+    name = db.Column(db.Text, nullable=False)
+    key_value = db.Column(db.Text, nullable=False, unique=True)
+    key_preview = db.Column(db.Text, nullable=False)  # last 4 chars for masked display
+    profile_id = db.Column(db.Integer, db.ForeignKey("backend_profiles.id", ondelete="CASCADE"), nullable=False)
+
+    # Expiry
+    expires_at = db.Column(db.DateTime(timezone=True), nullable=True)
+
+    # Revocation
+    revoked = db.Column(db.Boolean, nullable=False, server_default=db.text("false"))
+    revoked_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    revoked_by = db.Column(db.Text, nullable=True)  # email of who revoked
+
+    # Feature opt-ins
+    vscode_continue = db.Column(db.Boolean, nullable=False, server_default=db.text("false"))
+    open_webui = db.Column(db.Boolean, nullable=False, server_default=db.text("false"))
+
+    # Timestamps
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        server_default=db.func.now(),
+    )
+
+    # Relationships
+    profile = db.relationship("BackendProfile", lazy="selectin")
+    policy_snapshots = db.relationship(
+        "PolicyVersion",
+        secondary=api_key_policy_snapshots,
+        lazy="selectin",
+    )
+
+    def to_dict(self, reveal_key=False):
+        """Serialise to a JSON-safe dict.
+
+        Args:
+            reveal_key: If True, include the full key value.
+                        If False, show only the masked preview.
+        """
+        from datetime import datetime, timezone
+
+        is_expired = False
+        if self.expires_at:
+            is_expired = self.expires_at <= datetime.now(timezone.utc)
+
+        result = {
+            "id": self.id,
+            "user_email": self.user_email,
+            "name": self.name,
+            "key_preview": f"gsk_…{self.key_preview}",
+            "profile_id": self.profile_id,
+            "profile_name": self.profile.name if self.profile else None,
+            "expires_at": self.expires_at.isoformat() if self.expires_at else None,
+            "is_expired": is_expired,
+            "revoked": self.revoked,
+            "revoked_at": self.revoked_at.isoformat() if self.revoked_at else None,
+            "revoked_by": self.revoked_by,
+            "vscode_continue": self.vscode_continue,
+            "open_webui": self.open_webui,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "policy_snapshot_ids": [pv.id for pv in self.policy_snapshots],
+        }
+
+        if reveal_key:
+            result["key_value"] = self.key_value
+
+        return result
+
+    def __repr__(self):
+        return f"<ApiKey {self.name!r} user={self.user_email!r}>"

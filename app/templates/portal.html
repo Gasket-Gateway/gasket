@@ -39,6 +39,118 @@
   </div>
 </div>
 
+<!-- ═══ API Keys Section ═══ -->
+<h2 style="margin-top: var(--space-xl);">Your API Keys</h2>
+<p class="text-muted">Create and manage API keys for accessing AI backends. You can reveal, edit, or revoke your keys.</p>
+
+<div style="margin-bottom: var(--space-md);">
+  <button class="btn btn-primary btn-sm" id="portal-create-key-btn">+ Create API Key</button>
+</div>
+
+<div id="portal-keys-loading" class="text-muted" style="padding: var(--space-lg); text-align: center;">Loading keys…</div>
+<div id="portal-keys-empty" style="display: none; padding: var(--space-lg); text-align: center;">
+  <p class="text-muted">You haven't created any API keys yet.</p>
+</div>
+<div id="portal-keys" style="display: none; margin-bottom: var(--space-lg);"></div>
+
+<!-- ═══ Create Key Modal ═══ -->
+<div class="modal-overlay" id="portal-create-key-modal" role="dialog" aria-modal="true" aria-labelledby="portal-create-key-title">
+  <div class="modal" style="max-width: 520px;">
+    <div class="modal-header">
+      <h3 id="portal-create-key-title">Create API Key</h3>
+      <button class="modal-close" id="portal-create-key-close" aria-label="Close dialog">✕</button>
+    </div>
+    <form id="portal-create-key-form" autocomplete="off">
+      <div class="form-group">
+        <label class="form-label" for="portal-key-name">Key Name *</label>
+        <input type="text" class="form-input" id="portal-key-name" required placeholder="e.g. my-vscode-key">
+        <p class="form-hint">A friendly name to identify this key.</p>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="portal-key-profile">Backend Profile *</label>
+        <select class="form-select" id="portal-key-profile" required>
+          <option value="">Select a profile…</option>
+        </select>
+        <p class="form-hint" id="portal-key-profile-hint">You must accept all policies before creating a key for a profile.</p>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="portal-key-expiry">Expiry Date</label>
+        <input type="date" class="form-input" id="portal-key-expiry" style="max-width: 220px;">
+        <p class="form-hint">Leave blank for default expiry (or no expiry if the profile doesn't require one).</p>
+      </div>
+      <div class="form-check" style="margin-bottom: var(--space-sm);">
+        <input type="checkbox" class="form-check-input" id="portal-key-vscode">
+        <label class="form-check-label" for="portal-key-vscode">Enable VSCode Continue integration</label>
+      </div>
+      <div class="form-check" style="margin-bottom: var(--space-md);" id="portal-key-webui-group">
+        <input type="checkbox" class="form-check-input" id="portal-key-webui">
+        <label class="form-check-label" for="portal-key-webui">Enable Open WebUI header support</label>
+      </div>
+      <div id="portal-create-key-error" style="display: none; color: var(--accent-danger); margin-bottom: var(--space-sm); font-size: 0.85rem;"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline btn-sm" id="portal-create-key-cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm" id="portal-create-key-submit">Create</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══ Key Created Success Modal ═══ -->
+<div class="modal-overlay" id="portal-key-created-modal" role="dialog" aria-modal="true" aria-labelledby="portal-key-created-title">
+  <div class="modal" style="max-width: 520px;">
+    <div class="modal-header">
+      <h3 id="portal-key-created-title">🔑 API Key Created</h3>
+      <button class="modal-close" id="portal-key-created-close" aria-label="Close dialog">✕</button>
+    </div>
+    <div>
+      <p style="margin-bottom: var(--space-sm); font-size: 0.85rem;">Your API key has been created. You can always reveal it later from your key list.</p>
+      <div style="background: var(--bg-secondary); border: 2px solid var(--border-color); border-radius: var(--radius-sm); padding: var(--space-md); margin-bottom: var(--space-md);">
+        <code id="portal-key-created-value" style="word-break: break-all; font-size: 0.85rem;"></code>
+      </div>
+      <button class="btn btn-outline btn-sm" id="portal-key-created-copy" style="margin-bottom: var(--space-sm);">📋 Copy to Clipboard</button>
+      <span id="portal-key-created-copied" style="display: none; color: var(--color-success); font-size: 0.8rem; margin-left: var(--space-sm);">✓ Copied</span>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-primary btn-sm" id="portal-key-created-done">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Key Detail / Edit Modal ═══ -->
+<div class="modal-overlay" id="portal-key-detail-modal" role="dialog" aria-modal="true" aria-labelledby="portal-key-detail-title">
+  <div class="modal" style="max-width: 520px;">
+    <div class="modal-header">
+      <h3 id="portal-key-detail-title">Key Details</h3>
+      <button class="modal-close" id="portal-key-detail-close" aria-label="Close dialog">✕</button>
+    </div>
+    <div>
+      <div id="portal-key-detail-body"></div>
+      <div id="portal-key-detail-error" style="display: none; color: var(--accent-danger); margin-top: var(--space-sm); font-size: 0.85rem;"></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline btn-sm" id="portal-key-detail-done">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Revoke Confirmation Modal ═══ -->
+<div class="modal-overlay" id="portal-key-revoke-modal" role="dialog" aria-modal="true" aria-labelledby="portal-key-revoke-title">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="portal-key-revoke-title">Revoke API Key</h3>
+      <button class="modal-close" id="portal-key-revoke-close" aria-label="Close dialog">✕</button>
+    </div>
+    <div>
+      <p>Are you sure you want to revoke <strong id="portal-key-revoke-name"></strong>?</p>
+      <p class="text-muted" style="font-size: 0.85rem;">The key will immediately stop working. You can request an administrator to restore it if needed.</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline btn-sm" id="portal-key-revoke-cancel">Cancel</button>
+      <button type="button" class="btn btn-danger btn-sm" id="portal-key-revoke-confirm">Revoke</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function() {
   "use strict";
@@ -240,8 +352,382 @@
       });
   });
 
+  // ═══════════════════════════════════════════════════════════════
+  //  Portal API Keys
+  // ═══════════════════════════════════════════════════════════════
+
+  var allProfiles = [];  // cached for create form
+
+  function getKeyStatusBadge(key) {
+    if (key.revoked) return '<span class="badge badge-danger" style="font-size:0.7rem;">Revoked</span>';
+    if (key.is_expired) return '<span class="badge badge-warning" style="font-size:0.7rem;">Expired</span>';
+    return '<span class="badge badge-success" style="font-size:0.7rem;">Active</span>';
+  }
+
+  function loadPortalKeys() {
+    var loading = document.getElementById('portal-keys-loading');
+    var empty = document.getElementById('portal-keys-empty');
+    var container = document.getElementById('portal-keys');
+
+    loading.style.display = 'block';
+    empty.style.display = 'none';
+    container.style.display = 'none';
+    container.innerHTML = '';
+
+    fetch('/api/keys')
+      .then(function(r) { return r.json(); })
+      .then(function(keys) {
+        loading.style.display = 'none';
+
+        if (keys.length === 0) {
+          empty.style.display = 'block';
+          return;
+        }
+
+        container.style.display = 'block';
+
+        keys.forEach(function(k) {
+          var card = document.createElement('div');
+          card.className = 'card';
+          card.style.marginBottom = 'var(--space-md)';
+
+          var statusBadge = getKeyStatusBadge(k);
+          var featureBadges = '';
+          if (k.vscode_continue) featureBadges += '<span class="badge badge-info" style="font-size:0.65rem; margin-left:4px;">VSCode</span>';
+          if (k.open_webui) featureBadges += '<span class="badge badge-info" style="font-size:0.65rem; margin-left:4px;">WebUI</span>';
+
+          var headerHtml = '<div class="card-header" style="display: flex; align-items: center; justify-content: space-between;">' +
+            '<div>' +
+              '<strong>' + escapeHtml(k.name) + '</strong> ' + statusBadge + featureBadges +
+            '</div>' +
+            '<div>' +
+              '<code style="font-size:0.8rem; color:var(--text-muted);">' + escapeHtml(k.key_preview) + '</code>' +
+            '</div>' +
+          '</div>';
+
+          var bodyHtml = '<div class="card-body" style="font-size:0.85rem;">';
+          bodyHtml += '<div style="display:flex; gap:var(--space-lg); flex-wrap:wrap; margin-bottom:var(--space-sm);">';
+          bodyHtml += '<div><span class="text-muted">Profile:</span> <strong>' + escapeHtml(k.profile_name || '—') + '</strong></div>';
+          bodyHtml += '<div><span class="text-muted">Created:</span> ' + (k.created_at ? new Date(k.created_at).toLocaleDateString() : '—') + '</div>';
+          bodyHtml += '<div><span class="text-muted">Expires:</span> ' + (k.expires_at ? new Date(k.expires_at).toLocaleDateString() : 'Never') + '</div>';
+          bodyHtml += '</div>';
+
+          if (k.revoked) {
+            bodyHtml += '<p style="font-size:0.8rem; color:var(--text-muted); margin-top:var(--space-xs);">' +
+              '🔒 Revoked' + (k.revoked_by ? ' by ' + escapeHtml(k.revoked_by) : '') +
+              (k.revoked_at ? ' on ' + new Date(k.revoked_at).toLocaleDateString() : '') +
+              '. Contact an administrator if you need this key restored.</p>';
+          }
+
+          bodyHtml += '</div>';
+
+          var footerHtml = '<div class="card-footer" style="display: flex; gap: var(--space-xs); align-items: center;">';
+          footerHtml += '<button class="btn btn-outline btn-sm portal-key-reveal" data-key-id="' + k.id + '" style="font-size:0.7rem;">👁 Reveal</button>';
+          footerHtml += '<button class="btn btn-info btn-sm portal-key-detail" data-key-id="' + k.id + '" style="font-size:0.7rem;">Edit</button>';
+          footerHtml += '<span style="flex:1;"></span>';
+          if (!k.revoked) {
+            footerHtml += '<button class="btn btn-danger btn-sm portal-key-revoke" data-key-id="' + k.id + '" data-key-name="' + escapeHtml(k.name) + '" style="font-size:0.7rem;">Revoke</button>';
+          }
+          footerHtml += '</div>';
+
+          card.innerHTML = headerHtml + bodyHtml + footerHtml;
+          container.appendChild(card);
+        });
+
+        // Bind card action buttons
+        container.querySelectorAll('.portal-key-reveal').forEach(function(btn) {
+          btn.addEventListener('click', function() { revealKey(btn.getAttribute('data-key-id')); });
+        });
+        container.querySelectorAll('.portal-key-detail').forEach(function(btn) {
+          btn.addEventListener('click', function() { openKeyDetailModal(btn.getAttribute('data-key-id')); });
+        });
+        container.querySelectorAll('.portal-key-revoke').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            openRevokeModal(btn.getAttribute('data-key-id'), btn.getAttribute('data-key-name'));
+          });
+        });
+      })
+      .catch(function() {
+        loading.style.display = 'none';
+        empty.style.display = 'block';
+      });
+  }
+
+  // ─── Reveal key inline ───
+  function revealKey(keyId) {
+    fetch('/api/keys/' + keyId + '/reveal')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.key_value) {
+          // Show in the key created modal for easy viewing/copying
+          document.getElementById('portal-key-created-value').textContent = data.key_value;
+          document.getElementById('portal-key-created-title').textContent = '🔑 ' + data.name;
+          document.getElementById('portal-key-created-modal').querySelector('p').textContent = 'Your API key value:';
+          document.getElementById('portal-key-created-copied').style.display = 'none';
+          document.getElementById('portal-key-created-modal').classList.add('active');
+        }
+      })
+      .catch(function() {
+        alert('Failed to reveal key.');
+      });
+  }
+
+  // ─── Key Detail / Edit modal ───
+  function openKeyDetailModal(keyId) {
+    var modal = document.getElementById('portal-key-detail-modal');
+    var body = document.getElementById('portal-key-detail-body');
+    var error = document.getElementById('portal-key-detail-error');
+    error.style.display = 'none';
+    body.innerHTML = '<p class="text-muted">Loading…</p>';
+    modal.classList.add('active');
+
+    fetch('/api/keys/' + keyId)
+      .then(function(r) { return r.json(); })
+      .then(function(k) {
+        document.getElementById('portal-key-detail-title').textContent = k.name;
+
+        var html = '<div style="margin-bottom:var(--space-md);">';
+        html += '<div style="display:flex; gap:var(--space-md); flex-wrap:wrap; margin-bottom:var(--space-md); font-size:0.85rem;">';
+        html += '<div><span class="text-muted">Profile:</span> <strong>' + escapeHtml(k.profile_name || '—') + '</strong></div>';
+        html += '<div><span class="text-muted">Status:</span> ' + getKeyStatusBadge(k) + '</div>';
+        html += '<div><span class="text-muted">Created:</span> ' + (k.created_at ? new Date(k.created_at).toLocaleString() : '—') + '</div>';
+        html += '<div><span class="text-muted">Expires:</span> ' + (k.expires_at ? new Date(k.expires_at).toLocaleString() : 'Never') + '</div>';
+        html += '</div>';
+
+        // Editable toggles
+        html += '<div style="margin-top:var(--space-md);">';
+        html += '<p style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: var(--space-sm); font-weight: 600;">Integrations</p>';
+        html += '<div class="form-check" style="margin-bottom:var(--space-sm);">';
+        html += '<input type="checkbox" class="form-check-input" id="detail-vscode" ' + (k.vscode_continue ? 'checked' : '') + '>';
+        html += '<label class="form-check-label" for="detail-vscode">VSCode Continue</label>';
+        html += '</div>';
+        html += '<div class="form-check" style="margin-bottom:var(--space-md);">';
+        html += '<input type="checkbox" class="form-check-input" id="detail-webui" ' + (k.open_webui ? 'checked' : '') + '>';
+        html += '<label class="form-check-label" for="detail-webui">Open WebUI</label>';
+        html += '</div>';
+        html += '<button class="btn btn-primary btn-sm" id="detail-save-btn" data-key-id="' + k.id + '">Save Changes</button>';
+        html += '</div>';
+        html += '</div>';
+        body.innerHTML = html;
+
+        // Bind save
+        document.getElementById('detail-save-btn').addEventListener('click', function() {
+          var btn = this;
+          btn.disabled = true;
+          btn.textContent = 'Saving…';
+          error.style.display = 'none';
+
+          fetch('/api/keys/' + k.id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              vscode_continue: document.getElementById('detail-vscode').checked,
+              open_webui: document.getElementById('detail-webui').checked
+            })
+          })
+            .then(function(res) {
+              if (!res.ok) return res.json().then(function(d) { throw new Error(d.error || 'Save failed'); });
+              return res.json();
+            })
+            .then(function() {
+              modal.classList.remove('active');
+              loadPortalKeys();
+            })
+            .catch(function(err) {
+              error.textContent = err.message;
+              error.style.display = 'block';
+              btn.disabled = false;
+              btn.textContent = 'Save Changes';
+            });
+        });
+      })
+      .catch(function() {
+        body.innerHTML = '<p class="text-danger">Failed to load key details.</p>';
+      });
+  }
+
+  var keyDetailModal = document.getElementById('portal-key-detail-modal');
+  document.getElementById('portal-key-detail-close').addEventListener('click', function() { keyDetailModal.classList.remove('active'); });
+  document.getElementById('portal-key-detail-done').addEventListener('click', function() { keyDetailModal.classList.remove('active'); });
+  keyDetailModal.addEventListener('click', function(e) { if (e.target === keyDetailModal) keyDetailModal.classList.remove('active'); });
+
+  // ─── Revoke modal ───
+  var revokeModal = document.getElementById('portal-key-revoke-modal');
+  var pendingRevokeId = null;
+
+  function openRevokeModal(keyId, keyName) {
+    pendingRevokeId = keyId;
+    document.getElementById('portal-key-revoke-name').textContent = keyName;
+    document.getElementById('portal-key-revoke-confirm').disabled = false;
+    document.getElementById('portal-key-revoke-confirm').textContent = 'Revoke';
+    revokeModal.classList.add('active');
+  }
+
+  function closeRevokeModal() {
+    revokeModal.classList.remove('active');
+    pendingRevokeId = null;
+  }
+
+  document.getElementById('portal-key-revoke-close').addEventListener('click', closeRevokeModal);
+  document.getElementById('portal-key-revoke-cancel').addEventListener('click', closeRevokeModal);
+  revokeModal.addEventListener('click', function(e) { if (e.target === revokeModal) closeRevokeModal(); });
+
+  document.getElementById('portal-key-revoke-confirm').addEventListener('click', function() {
+    if (!pendingRevokeId) return;
+    var btn = this;
+    btn.disabled = true;
+    btn.textContent = 'Revoking…';
+
+    fetch('/api/keys/' + pendingRevokeId + '/revoke', { method: 'POST' })
+      .then(function(res) {
+        if (!res.ok) return res.json().then(function(d) { throw new Error(d.error); });
+        closeRevokeModal();
+        loadPortalKeys();
+      })
+      .catch(function(err) {
+        alert('Revoke failed: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = 'Revoke';
+      });
+  });
+
+  // ─── Create key modal ───
+  var createKeyModal = document.getElementById('portal-create-key-modal');
+  var createKeyForm = document.getElementById('portal-create-key-form');
+  var createKeyError = document.getElementById('portal-create-key-error');
+  var createKeySubmit = document.getElementById('portal-create-key-submit');
+
+  function openCreateKeyModal() {
+    createKeyError.style.display = 'none';
+    createKeySubmit.disabled = false;
+    createKeySubmit.textContent = 'Create';
+    document.getElementById('portal-key-name').value = '';
+    document.getElementById('portal-key-expiry').value = '';
+    document.getElementById('portal-key-vscode').checked = false;
+    document.getElementById('portal-key-webui').checked = false;
+    document.getElementById('portal-key-webui-group').style.display = 'none';
+
+    // Populate profiles dropdown
+    var select = document.getElementById('portal-key-profile');
+    select.innerHTML = '<option value="">Select a profile…</option>';
+
+    fetch('/admin/api/profiles')
+      .then(function(r) { return r.json(); })
+      .then(function(profiles) {
+        allProfiles = profiles;
+
+        // Check each profile's policy status
+        var checks = profiles.map(function(p) {
+          return fetch('/admin/api/policies/acceptances/check/' + p.id)
+            .then(function(r) { return r.json(); })
+            .then(function(status) {
+              return { profile: p, all_accepted: status.all_accepted, hasPolicies: (status.accepted && status.accepted.length > 0) || (status.pending && status.pending.length > 0) };
+            });
+        });
+
+        Promise.all(checks).then(function(results) {
+          results.forEach(function(r) {
+            var opt = document.createElement('option');
+            opt.value = r.profile.id;
+            var canCreate = r.all_accepted;
+            opt.textContent = r.profile.name + (canCreate ? '' : ' (policies pending)');
+            opt.disabled = !canCreate;
+            select.appendChild(opt);
+          });
+        });
+      });
+
+    createKeyModal.classList.add('active');
+    document.getElementById('portal-key-name').focus();
+  }
+
+  // Show/hide open_webui based on profile selection
+  document.getElementById('portal-key-profile').addEventListener('change', function() {
+    var profileId = parseInt(this.value);
+    var profile = allProfiles.find(function(p) { return p.id === profileId; });
+    var webuiGroup = document.getElementById('portal-key-webui-group');
+    if (profile && profile.open_webui_enabled) {
+      webuiGroup.style.display = '';
+    } else {
+      webuiGroup.style.display = 'none';
+      document.getElementById('portal-key-webui').checked = false;
+    }
+  });
+
+  document.getElementById('portal-create-key-btn').addEventListener('click', openCreateKeyModal);
+
+  function closeCreateKeyModal() { createKeyModal.classList.remove('active'); }
+  document.getElementById('portal-create-key-close').addEventListener('click', closeCreateKeyModal);
+  document.getElementById('portal-create-key-cancel').addEventListener('click', closeCreateKeyModal);
+  createKeyModal.addEventListener('click', function(e) { if (e.target === createKeyModal) closeCreateKeyModal(); });
+
+  createKeyForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    createKeyError.style.display = 'none';
+    createKeySubmit.disabled = true;
+    createKeySubmit.textContent = 'Creating…';
+
+    var payload = {
+      name: document.getElementById('portal-key-name').value.trim(),
+      profile_id: parseInt(document.getElementById('portal-key-profile').value),
+      vscode_continue: document.getElementById('portal-key-vscode').checked,
+      open_webui: document.getElementById('portal-key-webui').checked
+    };
+
+    var expiry = document.getElementById('portal-key-expiry').value;
+    if (expiry) {
+      payload.expires_at = expiry + 'T23:59:59+00:00';
+    }
+
+    fetch('/api/keys', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+      .then(function(res) {
+        if (!res.ok) return res.json().then(function(d) { throw new Error(d.error || 'Create failed'); });
+        return res.json();
+      })
+      .then(function(data) {
+        closeCreateKeyModal();
+        loadPortalKeys();
+
+        // Show the created key modal
+        document.getElementById('portal-key-created-title').textContent = '🔑 API Key Created';
+        document.getElementById('portal-key-created-modal').querySelector('p').textContent = 'Your API key has been created. You can always reveal it later from your key list.';
+        document.getElementById('portal-key-created-value').textContent = data.key_value;
+        document.getElementById('portal-key-created-copied').style.display = 'none';
+        document.getElementById('portal-key-created-modal').classList.add('active');
+      })
+      .catch(function(err) {
+        createKeyError.textContent = err.message;
+        createKeyError.style.display = 'block';
+        createKeySubmit.disabled = false;
+        createKeySubmit.textContent = 'Create';
+      });
+  });
+
+  // ─── Key created modal ───
+  var createdModal = document.getElementById('portal-key-created-modal');
+  function closeCreatedModal() { createdModal.classList.remove('active'); }
+  document.getElementById('portal-key-created-close').addEventListener('click', closeCreatedModal);
+  document.getElementById('portal-key-created-done').addEventListener('click', closeCreatedModal);
+  createdModal.addEventListener('click', function(e) { if (e.target === createdModal) closeCreatedModal(); });
+
+  document.getElementById('portal-key-created-copy').addEventListener('click', function() {
+    var val = document.getElementById('portal-key-created-value').textContent;
+    navigator.clipboard.writeText(val).then(function() {
+      document.getElementById('portal-key-created-copied').style.display = 'inline';
+      setTimeout(function() {
+        document.getElementById('portal-key-created-copied').style.display = 'none';
+      }, 2000);
+    });
+  });
+
   // Load on page ready
   loadPortalProfiles();
+  loadPortalKeys();
 })();
+
 </script>
 {% endblock %}

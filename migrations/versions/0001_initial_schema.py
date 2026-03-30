@@ -95,9 +95,37 @@ def upgrade() -> None:
         sa.Column("accepted_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
     )
 
+    # ── API Keys ──
+
+    op.create_table(
+        "api_keys",
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("user_email", sa.Text(), nullable=False),
+        sa.Column("name", sa.Text(), nullable=False),
+        sa.Column("key_value", sa.Text(), nullable=False),
+        sa.Column("key_preview", sa.Text(), nullable=False),
+        sa.Column("profile_id", sa.Integer(), sa.ForeignKey("backend_profiles.id", ondelete="CASCADE"), nullable=False),
+        sa.Column("expires_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("revoked", sa.Boolean(), nullable=False, server_default=sa.text("false")),
+        sa.Column("revoked_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("revoked_by", sa.Text(), nullable=True),
+        sa.Column("vscode_continue", sa.Boolean(), nullable=False, server_default=sa.text("false")),
+        sa.Column("open_webui", sa.Boolean(), nullable=False, server_default=sa.text("false")),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.UniqueConstraint("key_value"),
+    )
+
+    op.create_table(
+        "api_key_policy_snapshots",
+        sa.Column("api_key_id", sa.Integer(), sa.ForeignKey("api_keys.id", ondelete="CASCADE"), primary_key=True),
+        sa.Column("policy_version_id", sa.Integer(), sa.ForeignKey("policy_versions.id"), primary_key=True),
+    )
+
 
 def downgrade() -> None:
     """Remove the initial Gasket database schema."""
+    op.drop_table("api_key_policy_snapshots")
+    op.drop_table("api_keys")
     op.drop_table("policy_acceptances")
     op.drop_table("profile_policies")
     op.drop_table("policy_versions")
