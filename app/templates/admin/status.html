@@ -1,0 +1,76 @@
+{% extends "admin/base.html" %}
+
+{% block admin_title %}Connection Status{% endblock %}
+
+{% block admin_content %}
+<div class="flex" style="align-items: center; justify-content: space-between; margin-bottom: 0;">
+  <h2 style="margin-bottom: 0;">Connection Status</h2>
+  <button class="btn btn-outline btn-sm" id="btn-check-all-status">↻ Check All</button>
+</div>
+<p>Health check status for all integrations.</p>
+
+<div class="grid grid-4" style="margin-top: var(--space-lg);" id="connection-status">
+  <div class="card" id="status-card-postgresql" data-service="postgresql" data-service-name="PostgreSQL">
+    <div class="card-body text-center">
+      <div class="status-indicator" style="justify-content: center;">
+        <span class="status-dot status-checking"></span>
+        <span>PostgreSQL</span>
+      </div>
+      <p class="text-muted mt-sm status-detail-text" style="font-size:0.8rem;">Checking…</p>
+    </div>
+  </div>
+  <div class="card" id="status-card-oidc" data-service="oidc" data-service-name="OIDC Provider">
+    <div class="card-body text-center">
+      <div class="status-indicator" style="justify-content: center;">
+        <span class="status-dot status-checking"></span>
+        <span>OIDC Provider</span>
+      </div>
+      <p class="text-muted mt-sm status-detail-text" style="font-size:0.8rem;">Checking…</p>
+    </div>
+  </div>
+  <div class="card" id="status-card-opensearch" data-service="opensearch" data-service-name="OpenSearch">
+    <div class="card-body text-center">
+      <div class="status-indicator" style="justify-content: center;">
+        <span class="status-dot status-checking"></span>
+        <span>OpenSearch</span>
+      </div>
+      <p class="text-muted mt-sm status-detail-text" style="font-size:0.8rem;">Checking…</p>
+    </div>
+  </div>
+</div>
+
+<div id="openai-backends-status" style="margin-top: var(--space-lg);"></div>
+{% endblock %}
+
+{% block admin_modals %}
+<!-- ═══ Error Detail Modal ═══ -->
+<div class="modal-overlay" id="error-detail-modal" role="dialog" aria-modal="true" aria-labelledby="error-modal-title">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="error-modal-title">Connection Error</h3>
+      <div style="display: flex; gap: var(--space-xs);">
+        <button class="modal-expand" id="error-modal-expand" aria-label="Toggle fullscreen">⛶</button>
+        <button class="modal-close" id="error-modal-close" aria-label="Close dialog">✕</button>
+      </div>
+    </div>
+    <div id="error-modal-body">
+      <p id="error-modal-service" style="margin-bottom: var(--space-sm);"></p>
+      <div id="error-modal-stats" style="display: flex; gap: var(--space-md); margin-bottom: var(--space-md);">
+        <div class="status-indicator">
+          <span class="status-dot status-error" id="error-modal-dot"></span>
+          <span id="error-modal-status-label">Error</span>
+        </div>
+        <span class="text-muted" style="font-size: 0.85rem;" id="error-modal-latency"></span>
+      </div>
+      <pre><code id="error-modal-detail"></code></pre>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" id="error-modal-recheck">↻ Recheck</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block admin_scripts %}
+<script src="{{ url_for('static', filename='js/admin_status.js') }}" defer></script>
+{% endblock %}

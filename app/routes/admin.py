@@ -2,7 +2,7 @@
 
 from concurrent.futures import ThreadPoolExecutor
 
-from flask import Blueprint, current_app, jsonify, render_template, request, session
+from flask import Blueprint, current_app, jsonify, redirect, render_template, request, session, url_for
 
 from ..auth import login_required, groups_required
 from ..health_checks import (
@@ -23,8 +23,84 @@ admin_bp = Blueprint("admin", __name__)
 @login_required
 @groups_required("gasket-admins")
 def admin_page():
-    """Render the admin panel page."""
-    return render_template("admin.html")
+    """Redirect to the default admin sub-page."""
+    return redirect(url_for("admin.admin_status_page"))
+
+
+@admin_bp.route("/admin/status")
+@login_required
+@groups_required("gasket-admins")
+def admin_status_page():
+    """Render the Connection Status page."""
+    return render_template("admin/status.html")
+
+
+@admin_bp.route("/admin/backends")
+@login_required
+@groups_required("gasket-admins")
+def admin_backends_page():
+    """Render the OpenAI Backends page."""
+    return render_template("admin/backends.html")
+
+
+@admin_bp.route("/admin/profiles")
+@login_required
+@groups_required("gasket-admins")
+def admin_profiles_page():
+    """Render the Backend Profiles page."""
+    return render_template("admin/profiles.html")
+
+
+@admin_bp.route("/admin/keys")
+@login_required
+@groups_required("gasket-admins")
+def admin_keys_page():
+    """Render the API Keys management page."""
+    return render_template("admin/keys.html")
+
+
+@admin_bp.route("/admin/policies")
+@login_required
+@groups_required("gasket-admins")
+def admin_policies_page():
+    """Render the Policies management page."""
+    return render_template("admin/policies.html")
+
+
+@admin_bp.route("/admin/audit")
+@login_required
+@groups_required("gasket-admins")
+def admin_audit_page():
+    """Render the Audit Records page."""
+    return render_template(
+        "admin/placeholder.html",
+        page_title="Audit Records",
+        page_description="Fetch and view audit records from OpenSearch. Search by user, API key, model, or time range.",
+    )
+
+
+@admin_bp.route("/admin/usage")
+@login_required
+@groups_required("gasket-admins")
+def admin_usage_page():
+    """Render the Usage Metrics page."""
+    return render_template(
+        "admin/placeholder.html",
+        page_title="Usage Metrics",
+        page_description="Usage metrics dashboard. Token usage, API call latency, success/failure rates, and active users.",
+    )
+
+
+@admin_bp.route("/admin/quotas")
+@login_required
+@groups_required("gasket-admins")
+def admin_quotas_page():
+    """Render the Quotas page."""
+    return render_template(
+        "admin/placeholder.html",
+        page_title="Quotas",
+        page_description="Usage quotas dashboard including current block statuses.",
+    )
 
 
 # ─── System status ─────────────────────────────────────────────────
@@ -564,4 +640,3 @@ def admin_key_policies(key_id):
 
     snapshots = get_key_policy_snapshots(key_id)
     return jsonify(snapshots)
-

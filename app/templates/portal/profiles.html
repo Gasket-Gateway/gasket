@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Your Profiles — Gasket Gateway{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Portal</h1>
+<p>Welcome, <strong>{{ session.get('user_name', 'User') }}</strong>. This is the main portal for managing your AI backend access.</p>
+
+<!-- ═══ Backend Profiles ═══ -->
+<h2 style="margin-top: var(--space-xl);">Your Backend Profiles</h2>
+<p class="text-muted">View your available backend profiles and accept required policies.</p>
+
+<div style="margin-bottom: var(--space-md);">
+  <a href="/keys" class="btn btn-primary btn-sm">🔑 Manage API Keys →</a>
+</div>
+
+<div id="portal-profiles-loading" class="text-muted" style="padding: var(--space-lg); text-align: center;">Loading profiles…</div>
+
+<div id="portal-profiles-empty" style="display: none; padding: var(--space-lg); text-align: center;">
+  <p class="text-muted">No backend profiles are available for your account.</p>
+</div>
+
+<div id="portal-profiles" style="display: none; margin-top: var(--space-lg);"></div>
+
+<!-- ═══ Policy Acceptance Modal ═══ -->
+<div class="modal-overlay" id="portal-policy-modal" role="dialog" aria-modal="true" aria-labelledby="portal-policy-modal-title">
+  <div class="modal" style="max-width: 640px;">
+    <div class="modal-header">
+      <h3 id="portal-policy-modal-title">Accept Policy</h3>
+      <button class="modal-close" id="portal-policy-modal-close" aria-label="Close dialog">✕</button>
+    </div>
+    <div style="margin-bottom: var(--space-md);">
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: var(--space-sm);">Please read and accept the following policy:</p>
+      <h4 id="portal-policy-name" style="margin-bottom: var(--space-xs);"></h4>
+      <p id="portal-policy-desc" class="text-muted" style="font-size: 0.85rem; margin-bottom: var(--space-md);"></p>
+      <div id="portal-policy-content" style="background: var(--bg-secondary); border: 2px solid var(--border-color); border-radius: var(--radius-sm); padding: var(--space-md); max-height: 300px; overflow-y: auto; font-size: 0.9rem; white-space: pre-wrap;"></div>
+    </div>
+    <div id="portal-policy-error" style="display: none; color: var(--accent-danger); margin-bottom: var(--space-sm); font-size: 0.85rem;"></div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline btn-sm" id="portal-policy-cancel">Cancel</button>
+      <button type="button" class="btn btn-primary btn-sm" id="portal-policy-accept">I Accept</button>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/portal_profiles.js') }}" defer></script>
+{% endblock %}

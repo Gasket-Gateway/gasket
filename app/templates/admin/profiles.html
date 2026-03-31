@@ -1,0 +1,162 @@
+{% extends "admin/base.html" %}
+
+{% block admin_title %}Backend Profiles{% endblock %}
+
+{% block admin_content %}
+<div class="flex" style="align-items: center; justify-content: space-between; margin-bottom: var(--space-md);">
+  <div>
+    <h2 style="margin-bottom: 0;">Backend Profiles</h2>
+    <p class="text-muted" style="margin-top: var(--space-xs);">Create, edit, and delete backend profiles with associated backends and policies.</p>
+  </div>
+  <button class="btn btn-primary btn-sm" id="btn-add-profile">+ Add Profile</button>
+</div>
+
+<div id="profiles-loading" class="text-muted" style="padding: var(--space-lg); text-align: center;">Loading profiles…</div>
+
+<div id="profiles-empty" style="display: none; padding: var(--space-lg); text-align: center;">
+  <p class="text-muted">No profiles configured yet.</p>
+  <button class="btn btn-primary btn-sm" onclick="document.getElementById('btn-add-profile').click()">+ Add your first profile</button>
+</div>
+
+<div id="profiles-table-wrapper" style="display: none;">
+  <table class="table" id="profiles-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Description</th>
+        <th>OIDC Groups</th>
+        <th>Source</th>
+        <th>Backends</th>
+        <th>Policies</th>
+        <th>Audit</th>
+        <th>Keys</th>
+        <th style="text-align: right;">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="profiles-tbody"></tbody>
+  </table>
+</div>
+{% endblock %}
+
+{% block admin_modals %}
+<!-- ═══ Profile Add/Edit Modal ═══ -->
+<div class="modal-overlay" id="profile-modal" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title">
+  <div class="modal" style="max-width: 640px;">
+    <div class="modal-header">
+      <h3 id="profile-modal-title">Add Profile</h3>
+      <button class="modal-close" id="profile-modal-close" aria-label="Close dialog">✕</button>
+    </div>
+    <form id="profile-form" autocomplete="off">
+      <input type="hidden" id="profile-form-id" value="">
+
+      <!-- ── General ── -->
+      <p style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: var(--space-sm); font-weight: 600;">General</p>
+      
+      <div class="form-group">
+        <label class="form-label" for="profile-form-name">Name *</label>
+        <input type="text" class="form-input" id="profile-form-name" required placeholder="e.g. standard-tier">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="profile-form-desc">Description</label>
+        <textarea class="form-textarea" id="profile-form-desc" placeholder="Internal description for admins — supports multiple lines" style="min-height: 60px;"></textarea>
+      </div>
+
+      <hr style="border: none; border-top: 1px solid var(--border-color); margin: var(--space-md) 0;">
+
+      <!-- ── Access & Backends ── -->
+      <p style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: var(--space-sm); font-weight: 600;">Access &amp; Backends</p>
+
+      <div class="form-group">
+        <label class="form-label" for="profile-form-oidc-groups">OIDC Groups</label>
+        <textarea class="form-textarea" id="profile-form-oidc-groups" placeholder="gasket-users&#10;gasket-power-users" style="min-height: 56px;"></textarea>
+        <p class="form-hint">One OIDC group per line. Users in any of these groups can access this profile.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="profile-form-backends">Linked Backends</label>
+        <select class="form-select" id="profile-form-backends" multiple size="4" style="height: auto; padding-right: var(--space-md);">
+        </select>
+        <p class="form-hint">Hold Ctrl/Cmd to select multiple backends.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="profile-form-policies">Linked Policies</label>
+        <select class="form-select" id="profile-form-policies" multiple size="4" style="height: auto; padding-right: var(--space-md);">
+        </select>
+        <p class="form-hint">Hold Ctrl/Cmd to select multiple policies. Users must accept all linked policies before creating API keys.</p>
+      </div>
+
+      <hr style="border: none; border-top: 1px solid var(--border-color); margin: var(--space-md) 0;">
+
+      <!-- ── Settings ── -->
+      <p style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: var(--space-sm); font-weight: 600;">Settings</p>
+
+      <div class="grid grid-2" style="margin-bottom: var(--space-md); gap: var(--space-lg);">
+        <div>
+          <label class="form-label" style="margin-bottom: var(--space-sm);">Audit</label>
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="profile-form-audit-meta" checked>
+            <label class="form-check-label" for="profile-form-audit-meta">Metadata audit</label>
+          </div>
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="profile-form-audit-content">
+            <label class="form-check-label" for="profile-form-audit-content">Full content audit</label>
+          </div>
+          <p class="form-hint" style="margin-top: var(--space-xs);">Content audit logs full request/response bodies to OpenSearch.</p>
+        </div>
+
+        <div>
+          <label class="form-label" style="margin-bottom: var(--space-sm);">API Key Limits</label>
+          <div class="form-group" style="margin-bottom: var(--space-sm);">
+            <label class="form-label" for="profile-form-max-keys" style="font-size: 0.8rem; margin-bottom: 2px;">Max keys per user</label>
+            <input type="number" class="form-input" id="profile-form-max-keys" value="5" min="1" style="width: 100px;">
+          </div>
+          <div class="form-group" style="margin-bottom: var(--space-sm);">
+            <label class="form-label" for="profile-form-expiry-days" style="font-size: 0.8rem; margin-bottom: 2px;">Default expiry (days)</label>
+            <input type="number" class="form-input" id="profile-form-expiry-days" min="1" style="width: 100px;" placeholder="None">
+          </div>
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="profile-form-enforce-expiry">
+            <label class="form-check-label" for="profile-form-enforce-expiry">Enforce expiry limit</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-check" style="margin-bottom: var(--space-md);">
+        <input type="checkbox" class="form-check-input" id="profile-form-open-webui">
+        <label class="form-check-label" for="profile-form-open-webui">Enable Open WebUI header support</label>
+        <p class="form-hint" style="margin-left: 24px;">When enabled, users can opt-in per API key to trust Open WebUI identity headers.</p>
+      </div>
+
+      <div id="profile-form-error" style="display: none; color: var(--accent-danger); margin-bottom: var(--space-sm); font-size: 0.85rem;"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline btn-sm" id="profile-form-cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm" id="profile-form-submit">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══ Profile Delete Confirmation Modal ═══ -->
+<div class="modal-overlay" id="profile-delete-modal" role="dialog" aria-modal="true" aria-labelledby="profile-delete-title">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="profile-delete-title">Delete Profile</h3>
+      <button class="modal-close" id="profile-delete-close" aria-label="Close dialog">✕</button>
+    </div>
+    <div>
+      <p>Are you sure you want to delete <strong id="profile-delete-name"></strong>?</p>
+      <p class="text-muted" style="font-size: 0.85rem;">This will not delete the associated backends, but any API keys tied specifically to this profile may become invalid.</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline btn-sm" id="profile-delete-cancel">Cancel</button>
+      <button type="button" class="btn btn-danger btn-sm" id="profile-delete-confirm">Delete</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block admin_scripts %}
+<script src="{{ url_for('static', filename='js/admin_profiles.js') }}" defer></script>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends "admin/base.html" %}
+
+{% block admin_title %}OpenAI Backends{% endblock %}
+
+{% block admin_content %}
+<div class="flex" style="align-items: center; justify-content: space-between; margin-bottom: var(--space-md);">
+  <div>
+    <h2 style="margin-bottom: 0;">OpenAI Backends</h2>
+    <p class="text-muted" style="margin-top: var(--space-xs);">Add, edit, and delete OpenAI-compliant backends. Config-defined backends are read-only.</p>
+  </div>
+  <div style="display: flex; gap: var(--space-xs);">
+    <button class="btn btn-outline btn-sm" id="btn-check-all-backends">↻ Check All</button>
+    <button class="btn btn-primary btn-sm" id="btn-add-backend">+ Add Backend</button>
+  </div>
+</div>
+
+<div id="backends-loading" class="text-muted" style="padding: var(--space-lg); text-align: center;">Loading backends…</div>
+
+<div id="backends-empty" style="display: none; padding: var(--space-lg); text-align: center;">
+  <p class="text-muted">No backends configured yet.</p>
+  <button class="btn btn-primary btn-sm" onclick="document.getElementById('btn-add-backend').click()">+ Add your first backend</button>
+</div>
+
+<div class="table-wrapper" id="backends-table-wrapper" style="display: none;">
+  <table class="table table-sortable" id="backends-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Base URL</th>
+        <th>API Key</th>
+        <th>TLS Verify</th>
+        <th>Source</th>
+        <th>Status</th>
+        <th style="text-align: right;">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="backends-tbody"></tbody>
+  </table>
+</div>
+{% endblock %}
+
+{% block admin_modals %}
+<!-- ═══ Backend Add/Edit Modal ═══ -->
+<div class="modal-overlay" id="backend-modal" role="dialog" aria-modal="true" aria-labelledby="backend-modal-title">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="backend-modal-title">Add Backend</h3>
+      <button class="modal-close" id="backend-modal-close" aria-label="Close dialog">✕</button>
+    </div>
+    <form id="backend-form" autocomplete="off">
+      <input type="hidden" id="backend-form-id" value="">
+      <div class="form-group">
+        <label class="form-label" for="backend-form-name">Name *</label>
+        <input type="text" class="form-input" id="backend-form-name" required placeholder="e.g. ollama-local">
+        <p class="form-hint">Unique name for this backend.</p>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="backend-form-url">Base URL *</label>
+        <input type="url" class="form-input" id="backend-form-url" required placeholder="e.g. http://ollama:11434">
+        <p class="form-hint">OpenAI-compliant API endpoint (without /v1).</p>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="backend-form-key">API Key</label>
+        <input type="text" class="form-input" id="backend-form-key" placeholder="Leave blank if not required">
+        <p class="form-hint">Bearer token for upstream authentication.</p>
+      </div>
+      <div class="form-group">
+        <div class="form-check">
+          <input type="checkbox" class="form-check-input" id="backend-form-tls">
+          <label class="form-check-label" for="backend-form-tls">Skip TLS verification</label>
+        </div>
+        <p class="form-hint">Only enable for development environments with self-signed certificates.</p>
+      </div>
+      <div id="backend-form-error" style="display: none; color: var(--accent-danger); margin-bottom: var(--space-sm); font-size: 0.85rem;"></div>
+      <div id="backend-form-test-result" style="display: none; margin-bottom: var(--space-sm); font-size: 0.85rem; padding: var(--space-sm); border: 2px solid var(--border-color); border-radius: var(--radius-sm);"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline btn-sm" id="backend-form-test">⟳ Save & Test</button>
+        <div style="flex: 1;"></div>
+        <button type="button" class="btn btn-outline btn-sm" id="backend-form-cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm" id="backend-form-submit">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══ Backend Delete Confirmation Modal ═══ -->
+<div class="modal-overlay" id="backend-delete-modal" role="dialog" aria-modal="true" aria-labelledby="backend-delete-title">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="backend-delete-title">Delete Backend</h3>
+      <button class="modal-close" id="backend-delete-close" aria-label="Close dialog">✕</button>
+    </div>
+    <div>
+      <p>Are you sure you want to delete <strong id="backend-delete-name"></strong>?</p>
+      <p class="text-muted" style="font-size: 0.85rem;">This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline btn-sm" id="backend-delete-cancel">Cancel</button>
+      <button type="button" class="btn btn-danger btn-sm" id="backend-delete-confirm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Error Detail Modal ═══ -->
+<div class="modal-overlay" id="error-detail-modal" role="dialog" aria-modal="true" aria-labelledby="error-modal-title">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="error-modal-title">Connection Error</h3>
+      <div style="display: flex; gap: var(--space-xs);">
+        <button class="modal-expand" id="error-modal-expand" aria-label="Toggle fullscreen">⛶</button>
+        <button class="modal-close" id="error-modal-close" aria-label="Close dialog">✕</button>
+      </div>
+    </div>
+    <div id="error-modal-body">
+      <p id="error-modal-service" style="margin-bottom: var(--space-sm);"></p>
+      <div id="error-modal-stats" style="display: flex; gap: var(--space-md); margin-bottom: var(--space-md);">
+        <div class="status-indicator">
+          <span class="status-dot status-error" id="error-modal-dot"></span>
+          <span id="error-modal-status-label">Error</span>
+        </div>
+        <span class="text-muted" style="font-size: 0.85rem;" id="error-modal-latency"></span>
+      </div>
+      <pre><code id="error-modal-detail"></code></pre>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" id="error-modal-recheck">↻ Recheck</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block admin_scripts %}
+<script src="{{ url_for('static', filename='js/admin_backends.js') }}" defer></script>
+{% endblock %}

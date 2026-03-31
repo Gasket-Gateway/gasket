@@ -370,11 +370,11 @@ class TestProfilesLifecycle:
 
 
 class TestProfilesAdminPage:
-    """Verify the admin page includes profiles content."""
+    """Verify the admin profiles page."""
 
     def test_admin_page_contains_profiles(self, client):
-        """GET /admin should contain Backend Profiles section."""
-        response = client.get("/admin")
+        """GET /admin/profiles should contain Backend Profiles section."""
+        response = client.get("/admin/profiles")
         assert response.status_code == 200
         assert "Backend Profiles" in response.text
 

@@ -12,7 +12,7 @@ def login_page():
     """Render the login/landing page."""
     # If already authenticated, redirect to portal
     if "user_email" in session:
-        return render_template("portal.html")
+        return render_template("portal/profiles.html")
     denied = request.args.get("denied")
     return render_template("login.html", access_denied=denied)
 
@@ -21,8 +21,16 @@ def login_page():
 @login_required
 @groups_required("gasket-users")
 def portal_page():
-    """Render the main portal page."""
-    return render_template("portal.html")
+    """Render the main portal page (profiles)."""
+    return render_template("portal/profiles.html")
+
+
+@portal_bp.route("/keys")
+@login_required
+@groups_required("gasket-users")
+def portal_keys_page():
+    """Render the API keys management page."""
+    return render_template("portal/keys.html")
 
 
 # ─── User API Key Management ──────────────────────────────────────

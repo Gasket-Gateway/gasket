@@ -1,0 +1,122 @@
+{% extends "admin/base.html" %}
+
+{% block admin_title %}Policies{% endblock %}
+
+{% block admin_content %}
+<div class="flex" style="align-items: center; justify-content: space-between; margin-bottom: var(--space-md);">
+  <div>
+    <h2 style="margin-bottom: 0;">Policies</h2>
+    <p class="text-muted" style="margin-top: var(--space-xs);">Create, edit, and delete policies. Assign policies to backend profiles. Config-defined policies are read-only.</p>
+  </div>
+  <button class="btn btn-primary btn-sm" id="btn-add-policy">+ Add Policy</button>
+</div>
+
+<div id="policies-loading" class="text-muted" style="padding: var(--space-lg); text-align: center;">Loading policies…</div>
+
+<div id="policies-empty" style="display: none; padding: var(--space-lg); text-align: center;">
+  <p class="text-muted">No policies configured yet.</p>
+  <button class="btn btn-primary btn-sm" onclick="document.getElementById('btn-add-policy').click()">+ Add your first policy</button>
+</div>
+
+<div id="policies-table-wrapper" style="display: none;">
+  <table class="table" id="policies-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Source</th>
+        <th>Version</th>
+        <th>Reacceptance</th>
+        <th>Profiles</th>
+        <th style="text-align: right;">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="policies-tbody"></tbody>
+  </table>
+</div>
+
+<h3 style="margin-top: var(--space-xl);">Acceptance Records</h3>
+<p class="text-muted" style="margin-bottom: var(--space-md);">Policy acceptance records with search by user.</p>
+
+<div class="form-group" style="max-width: 400px; margin-bottom: var(--space-md);">
+  <input type="text" class="form-input" id="acceptances-user-filter" placeholder="Filter by user email…">
+</div>
+
+<div id="acceptances-loading" class="text-muted" style="padding: var(--space-lg); text-align: center;">Loading…</div>
+<div id="acceptances-empty" style="display: none; padding: var(--space-md); text-align: center;"><p class="text-muted">No acceptance records found.</p></div>
+<div id="acceptances-table-wrapper" style="display: none;">
+  <table class="table" id="acceptances-table">
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Policy</th>
+        <th>Version</th>
+        <th>Profile</th>
+        <th>Accepted At</th>
+      </tr>
+    </thead>
+    <tbody id="acceptances-tbody"></tbody>
+  </table>
+</div>
+{% endblock %}
+
+{% block admin_modals %}
+<!-- ═══ Policy Add/Edit Modal ═══ -->
+<div class="modal-overlay" id="policy-modal" role="dialog" aria-modal="true" aria-labelledby="policy-modal-title">
+  <div class="modal" style="max-width: 640px;">
+    <div class="modal-header">
+      <h3 id="policy-modal-title">Add Policy</h3>
+      <button class="modal-close" id="policy-modal-close" aria-label="Close dialog">✕</button>
+    </div>
+    <form id="policy-form" autocomplete="off">
+      <input type="hidden" id="policy-form-id" value="">
+      <div class="form-group">
+        <label class="form-label" for="policy-form-name">Name *</label>
+        <input type="text" class="form-input" id="policy-form-name" required placeholder="e.g. acceptable-use">
+        <p class="form-hint">Unique name for this policy.</p>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="policy-form-desc">Description</label>
+        <textarea class="form-textarea" id="policy-form-desc" placeholder="Internal description for admins" style="min-height: 60px;"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="policy-form-content">Policy Content *</label>
+        <textarea class="form-textarea" id="policy-form-content" required placeholder="The policy text that users must accept" style="min-height: 120px;"></textarea>
+        <p class="form-hint">Displayed to users. They must accept this before creating API keys. Changing content creates a new version.</p>
+      </div>
+      <div class="form-check" style="margin-bottom: var(--space-md);">
+        <input type="checkbox" class="form-check-input" id="policy-form-reaccept">
+        <label class="form-check-label" for="policy-form-reaccept">Enforce reacceptance on change</label>
+        <p class="form-hint" style="margin-left: 24px;">When enabled, users must reaccept the policy after content changes before they can create new API keys.</p>
+      </div>
+      <div id="policy-form-error" style="display: none; color: var(--accent-danger); margin-bottom: var(--space-sm); font-size: 0.85rem;"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline btn-sm" id="policy-form-cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm" id="policy-form-submit">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══ Policy Delete Confirmation Modal ═══ -->
+<div class="modal-overlay" id="policy-delete-modal" role="dialog" aria-modal="true" aria-labelledby="policy-delete-title">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="policy-delete-title">Delete Policy</h3>
+      <button class="modal-close" id="policy-delete-close" aria-label="Close dialog">✕</button>
+    </div>
+    <div>
+      <p>Are you sure you want to delete <strong id="policy-delete-name"></strong>?</p>
+      <p class="text-muted" style="font-size: 0.85rem;">This will remove all versions and acceptance records for this policy.</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline btn-sm" id="policy-delete-cancel">Cancel</button>
+      <button type="button" class="btn btn-danger btn-sm" id="policy-delete-confirm">Delete</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block admin_scripts %}
+<script src="{{ url_for('static', filename='js/admin_policies.js') }}" defer></script>
+{% endblock %}

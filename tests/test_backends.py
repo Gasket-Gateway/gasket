@@ -303,11 +303,11 @@ class TestBackendsLifecycle:
 
 
 class TestBackendsAdminPage:
-    """Verify the admin page includes backends content."""
+    """Verify the admin backends page."""
 
     def test_backends_page_loads(self, client):
-        """GET /admin should load and contain OpenAI Backends."""
-        response = client.get("/admin")
+        """GET /admin/backends should load and contain OpenAI Backends."""
+        response = client.get("/admin/backends")
         assert response.status_code == 200
         assert "OpenAI Backends" in response.text
 

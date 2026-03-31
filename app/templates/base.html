@@ -43,8 +43,9 @@
       <ul id="navbar-menu" class="navbar-nav" role="menubar">
         {% if session.get('user_email') %}
         <li role="none"><a href="/" role="menuitem" class="{% if request.path == '/' %}active{% endif %}" {% if request.path == '/' %}aria-current="page"{% endif %}>Portal</a></li>
+        <li role="none"><a href="/keys" role="menuitem" class="{% if request.path == '/keys' %}active{% endif %}" {% if request.path == '/keys' %}aria-current="page"{% endif %}>API Keys</a></li>
         {% if is_admin %}
-        <li role="none"><a href="/admin" role="menuitem" class="nav-admin {% if request.path == '/admin' %}active{% endif %}" {% if request.path == '/admin' %}aria-current="page"{% endif %}>Admin</a></li>
+        <li role="none"><a href="/admin" role="menuitem" class="nav-admin {% if request.path.startswith('/admin') %}active{% endif %}" {% if request.path.startswith('/admin') %}aria-current="page"{% endif %}>Admin</a></li>
         {% endif %}
         {% endif %}
         <li role="none" class="navbar-utils">
