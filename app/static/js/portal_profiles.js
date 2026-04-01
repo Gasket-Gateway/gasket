@@ -19,7 +19,7 @@
     var container = document.getElementById('portal-profiles');
     loading.style.display = 'block'; empty.style.display = 'none'; container.style.display = 'none'; container.innerHTML = '';
 
-    fetch('/admin/api/profiles')
+    fetch('/api/profiles')
       .then(function(r) { return r.json(); })
       .then(function(profiles) {
         loading.style.display = 'none';
@@ -108,7 +108,7 @@
     acceptError.style.display = 'none';
     acceptBtn.disabled = false;
     acceptBtn.textContent = 'I Accept';
-    fetch('/admin/api/policies/' + policyId)
+    fetch('/api/policies/' + policyId)
       .then(function(r) { return r.json(); })
       .then(function(d) {
         document.getElementById('portal-policy-name').textContent = d.name + (d.current_version ? ' (v' + d.current_version + ')' : '');

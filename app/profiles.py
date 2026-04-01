@@ -19,6 +19,33 @@ def list_profiles():
     return BackendProfile.query.order_by(BackendProfile.name).all()
 
 
+def list_profiles_for_groups(user_groups):
+    """Return profiles whose oidc_groups overlap with the given user groups.
+
+    The oidc_groups column stores a comma-separated string of group names.
+    A profile matches if *any* of the user's groups appear in the profile's
+    oidc_groups list.
+
+    Args:
+        user_groups: list of OIDC group name strings for the current user.
+
+    Returns:
+        List of matching BackendProfile instances, ordered by name.
+    """
+    if not user_groups:
+        return []
+
+    all_profiles = BackendProfile.query.order_by(BackendProfile.name).all()
+    matched = []
+    for profile in all_profiles:
+        profile_groups = {
+            g.strip() for g in (profile.oidc_groups or "").split(",") if g.strip()
+        }
+        if profile_groups & set(user_groups):
+            matched.append(profile)
+    return matched
+
+
 def get_profile(profile_id):
     """Return a single profile by ID, or None."""
     return db.session.get(BackendProfile, profile_id)

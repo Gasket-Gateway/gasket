@@ -33,6 +33,38 @@ def portal_keys_page():
     return render_template("portal/keys.html")
 
 
+# ─── User-facing Profile & Policy API ─────────────────────────────
+
+
+@portal_bp.route("/api/profiles")
+@login_required
+@groups_required("gasket-users")
+def list_my_profiles():
+    """List profiles the current user has access to, based on OIDC groups."""
+    from ..profiles import list_profiles_for_groups
+
+    user_groups = session.get("user_groups", [])
+    profiles = list_profiles_for_groups(user_groups)
+    return jsonify([p.to_dict() for p in profiles])
+
+
+@portal_bp.route("/api/policies/<int:policy_id>")
+@login_required
+@groups_required("gasket-users")
+def get_policy_for_user(policy_id):
+    """Get a single policy's details (for the acceptance modal).
+
+    Regular users can read policy content so they can review before accepting.
+    """
+    from ..policies import get_policy
+
+    policy = get_policy(policy_id)
+    if not policy:
+        return jsonify({"error": "Policy not found"}), 404
+
+    return jsonify(policy.to_dict(include_versions=False))
+
+
 # ─── User API Key Management ──────────────────────────────────────
 
 

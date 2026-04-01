@@ -5,7 +5,7 @@ import time
 import pytest
 import requests
 
-from .conftest import fetch_ropc_token, GASKET_URL
+from .conftest import fetch_ropc_token, authentik_login, GASKET_URL
 
 
 # ─── ROPC Token Tests ─────────────────────────────────────────────
@@ -44,94 +44,6 @@ class TestROPCTokenExchange:
         )
 
 
-# ─── Shadow DOM helpers ───────────────────────────────────────────
-
-# Authentik renders its login form inside nested Shadow DOM web components.
-# Standard Selenium selectors can't pierce shadow roots, so we use JS.
-
-JS_FIND_UID_INPUT = """(function() {
-    var executor = document.querySelector('ak-flow-executor');
-    if (!executor || !executor.shadowRoot) return null;
-    var stage = executor.shadowRoot.querySelector(
-        'ak-stage-identification, ak-stage-password, ak-stage-autosubmit'
-    );
-    if (!stage || !stage.shadowRoot) return null;
-    return stage.shadowRoot.querySelector('input[name="uidField"]');
-})()"""
-
-JS_FIND_PW_INPUT = """(function() {
-    var executor = document.querySelector('ak-flow-executor');
-    if (!executor || !executor.shadowRoot) return null;
-    var stage = executor.shadowRoot.querySelector(
-        'ak-stage-password, ak-stage-identification'
-    );
-    if (!stage || !stage.shadowRoot) return null;
-    return stage.shadowRoot.querySelector('input[name="password"]');
-})()"""
-
-JS_FIND_SUBMIT = """(function() {
-    var executor = document.querySelector('ak-flow-executor');
-    if (!executor || !executor.shadowRoot) return null;
-    var stage = executor.shadowRoot.querySelector(
-        'ak-stage-identification, ak-stage-password, ak-stage-consent, ak-stage-autosubmit'
-    );
-    if (!stage || !stage.shadowRoot) return null;
-    return stage.shadowRoot.querySelector('button[type="submit"]');
-})()"""
-
-
-def _wait_for_js(browser, js_script, timeout=15):
-    """Poll until a JS script returns a non-null element."""
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        el = browser.execute_script(f"return {js_script}")
-        if el:
-            return el
-        time.sleep(0.5)
-    return None
-
-
-def _authentik_login(browser, gasket_url, username, password):
-    """Perform a full Authentik browser login flow, piercing Shadow DOM."""
-    browser.delete_all_cookies()
-    browser.get(f"{gasket_url}/auth/login")
-    time.sleep(2)  # Let the page load / redirect to Authentik
-
-    if "authentik" not in browser.current_url.lower():
-        return  # Already logged in or no redirect
-
-    # Username stage
-    uid_input = _wait_for_js(browser, JS_FIND_UID_INPUT, timeout=15)
-    assert uid_input, f"Could not find username input. URL: {browser.current_url}"
-    uid_input.clear()
-    uid_input.send_keys(username)
-
-    submit_btn = _wait_for_js(browser, JS_FIND_SUBMIT, timeout=5)
-    assert submit_btn, "Could not find submit button on username stage"
-    submit_btn.click()
-    time.sleep(2)  # Wait for password stage
-
-    # Password stage
-    pw_input = _wait_for_js(browser, JS_FIND_PW_INPUT, timeout=15)
-    assert pw_input, f"Could not find password input. URL: {browser.current_url}"
-    pw_input.clear()
-    pw_input.send_keys(password)
-
-    submit_btn = _wait_for_js(browser, JS_FIND_SUBMIT, timeout=5)
-    assert submit_btn, "Could not find submit button on password stage"
-    submit_btn.click()
-
-    # Wait for redirect back to Gasket (consent screen is disabled in provision.sh)
-    deadline = time.time() + 15
-    while time.time() < deadline:
-        url = browser.current_url.lower()
-        if "gasket" in url and "authentik" not in url:
-            return
-        time.sleep(0.5)
-
-    pytest.fail(f"Did not redirect back to Gasket. Final URL: {browser.current_url}")
-
-
 # ─── Portal Access Tests ──────────────────────────────────────────
 
 
@@ -151,14 +63,14 @@ class TestPortalAccess:
 
     def test_authenticated_portal_access(self, browser, gasket_url, user2_token):
         """user2 should be able to access the portal after OIDC login."""
-        _authentik_login(browser, gasket_url, "user2", "password")
+        authentik_login(browser, gasket_url, "user2", "password")
         assert "gasket" in browser.current_url.lower(), (
             f"Expected portal page, got: {browser.current_url}"
         )
 
     def test_admin_panel_access(self, browser, gasket_url):
         """user3 (admin) should have access to the admin panel."""
-        _authentik_login(browser, gasket_url, "user3", "password")
+        authentik_login(browser, gasket_url, "user3", "password")
         browser.get(f"{gasket_url}/admin")
         time.sleep(1)
         assert "/admin" in browser.current_url or "Admin" in browser.page_source, (

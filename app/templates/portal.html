@@ -175,7 +175,7 @@
     container.style.display = 'none';
     container.innerHTML = '';
 
-    fetch('/admin/api/profiles')
+    fetch('/api/profiles')
       .then(function(r) { return r.json(); })
       .then(function(profiles) {
         loading.style.display = 'none';
@@ -299,7 +299,7 @@
     policyAcceptBtn.textContent = 'I Accept';
 
     // Fetch policy details
-    fetch('/admin/api/policies/' + policyId)
+    fetch('/api/policies/' + policyId)
       .then(function(r) { return r.json(); })
       .then(function(data) {
         document.getElementById('portal-policy-name').textContent = data.name + (data.current_version ? ' (v' + data.current_version + ')' : '');
@@ -611,7 +611,7 @@
     var select = document.getElementById('portal-key-profile');
     select.innerHTML = '<option value="">Select a profile…</option>';
 
-    fetch('/admin/api/profiles')
+    fetch('/api/profiles')
       .then(function(r) { return r.json(); })
       .then(function(profiles) {
         allProfiles = profiles;

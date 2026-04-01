@@ -174,7 +174,7 @@
     var select = document.getElementById('portal-key-profile');
     select.innerHTML = '<option value="">Select a profile…</option>';
 
-    fetch('/admin/api/profiles').then(function(r) { return r.json(); }).then(function(profiles) {
+    fetch('/api/profiles').then(function(r) { return r.json(); }).then(function(profiles) {
       allProfiles = profiles;
       var checks = profiles.map(function(p) {
         return fetch('/admin/api/policies/acceptances/check/' + p.id).then(function(r2) { return r2.json(); })
