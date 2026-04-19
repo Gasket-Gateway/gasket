@@ -88,6 +88,14 @@ def create_app(config_path=None):
 
         @app.before_request
         def inject_test_session():
+            from flask import request as req
+
+            # Don't auto-inject on test control endpoints
+            if req.path.startswith("/test/"):
+                return
+            # Don't auto-inject if session was deliberately cleared
+            if session.get("_test_anon"):
+                return
             if "user_email" not in session:
                 session["user_email"] = "user3@localhost"
                 session["user_name"] = "user3"
@@ -113,6 +121,12 @@ def create_app(config_path=None):
     app.register_blueprint(health_bp)
     app.register_blueprint(ui_demo_bp)
     app.register_blueprint(errors_bp)
+
+    # Test session control — only in test mode
+    if os.environ.get("GASKET_TEST_MODE"):
+        from .routes.test_session import test_session_bp
+
+        app.register_blueprint(test_session_bp)
 
     # Inject template context
     @app.context_processor
