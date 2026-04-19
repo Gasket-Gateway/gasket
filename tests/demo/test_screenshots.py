@@ -120,12 +120,5 @@ class TestPortalScreenshots:
             time.sleep(0.5)
             take_screenshot(browser, "portal_keys_modal_add")
 
-    def test_capture_ui_demo(self, browser, mock_data):
-        login_as(browser, "admin")
-        browser.get(f"{GASKET_URL}/ui-demo")
-        take_screenshot(browser, "ui_demo_top")
-        
-        # Scroll down and capture another section
-        browser.execute_script("window.scrollTo(0, 1000);")
-        time.sleep(0.5)
-        take_screenshot(browser, "ui_demo_middle")
+    # NOTE: Do NOT capture the /ui-demo page in the future. The UI component demo
+    # should not be included in the public-facing documentation screenshots.
