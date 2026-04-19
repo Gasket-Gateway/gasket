@@ -1,13 +1,13 @@
 {% extends "admin/base.html" %}
 
 {% block admin_title %}Connection Status{% endblock %}
+{% block admin_page_title %}Connection Status{% endblock %}
 
 {% block admin_content %}
-<div class="flex" style="align-items: center; justify-content: space-between; margin-bottom: 0;">
-  <h2 style="margin-bottom: 0;">Connection Status</h2>
+<div class="flex" style="align-items: center; justify-content: space-between; margin-bottom: var(--space-md);">
+  <p class="text-muted" style="margin-top: 0;">Health check status for all integrations.</p>
   <button class="btn btn-outline btn-sm" id="btn-check-all-status">↻ Check All</button>
 </div>
-<p>Health check status for all integrations.</p>
 
 <div class="grid grid-4" style="margin-top: var(--space-lg);" id="connection-status">
   <div class="card" id="status-card-postgresql" data-service="postgresql" data-service-name="PostgreSQL">
@@ -50,7 +50,10 @@
       <h3 id="error-modal-title">Connection Error</h3>
       <div style="display: flex; gap: var(--space-xs);">
         <button class="modal-expand" id="error-modal-expand" aria-label="Toggle fullscreen">⛶</button>
-        <button class="modal-close" id="error-modal-close" aria-label="Close dialog">✕</button>
+        <div style="display: flex; gap: var(--space-xs);">
+          <button class="modal-expand" type="button" aria-label="Expand dialog" title="Toggle Fullscreen">⛶</button>
+          <button class="modal-close" id="error-modal-close" aria-label="Close dialog">✕</button>
+        </div>
       </div>
     </div>
     <div id="error-modal-body">

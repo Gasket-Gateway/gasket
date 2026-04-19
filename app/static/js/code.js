@@ -160,5 +160,16 @@
 
     // Syntax highlighting on all <pre><code> blocks
     document.querySelectorAll("pre code").forEach(highlightCode);
+
+    // Global modal expand toggle
+    document.querySelectorAll('.modal-expand').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var modal = this.closest('.modal');
+        if (modal) {
+          modal.classList.toggle('modal-expanded');
+          this.classList.toggle('active');
+        }
+      });
+    });
   });
 })();

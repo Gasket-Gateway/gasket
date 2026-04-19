@@ -2,35 +2,28 @@
 
 {% block title %}{% block admin_title %}Admin Panel{% endblock %} — Gasket Gateway{% endblock %}
 
+{% block navbar_theme %}theme-admin{% endblock %}
+
+{% block navbar_links %}
+<li role="none"><a href="/admin/status" role="menuitem" class="{% if request.path == '/admin/status' or request.path == '/admin' %}active{% endif %}">Status</a></li>
+<li role="none"><a href="/admin/backends" role="menuitem" class="{% if request.path == '/admin/backends' %}active{% endif %}">Backends</a></li>
+<li role="none"><a href="/admin/profiles" role="menuitem" class="{% if request.path == '/admin/profiles' %}active{% endif %}">Profiles</a></li>
+<li role="none"><a href="/admin/keys" role="menuitem" class="{% if request.path == '/admin/keys' %}active{% endif %}">Keys</a></li>
+<li role="none"><a href="/admin/policies" role="menuitem" class="{% if request.path == '/admin/policies' %}active{% endif %}">Policies</a></li>
+<li role="none"><a href="/admin/audit" role="menuitem" class="{% if request.path == '/admin/audit' %}active{% endif %}">Audit</a></li>
+<li role="none"><a href="/admin/usage" role="menuitem" class="{% if request.path == '/admin/usage' %}active{% endif %}">Usage</a></li>
+<li role="none"><a href="/admin/quotas" role="menuitem" class="{% if request.path == '/admin/quotas' %}active{% endif %}">Quotas</a></li>
+<li role="none" class="nav-separator">|</li>
+<li role="none"><a href="/" role="menuitem" class="nav-btn-primary">Exit Admin</a></li>
+{% endblock %}
+
 {% block content %}
-<div class="flex" style="align-items: center; margin-bottom: var(--space-lg);">
-  <h1 class="page-title page-title-danger" style="margin-bottom: 0;">Admin Panel</h1>
+<div class="flex" style="align-items: center; margin-bottom: var(--space-lg); gap: var(--space-md);">
+  <h1 class="page-title page-title-box page-title-admin" style="margin-bottom: 0;">{% block admin_page_title %}Admin Panel{% endblock %}</h1>
 </div>
 
-<div class="admin-layout" style="display: flex; border: var(--border-width) solid var(--border-color); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-md); min-height: 500px;">
-  <div class="sidebar">
-    <div class="sidebar-section">
-      <div class="sidebar-title">System</div>
-      <a href="/admin/status" class="sidebar-link {% if request.path == '/admin/status' or request.path == '/admin' %}active{% endif %}">⚡ Connection Status</a>
-    </div>
-    <div class="sidebar-section">
-      <div class="sidebar-title">Management</div>
-      <a href="/admin/backends" class="sidebar-link {% if request.path == '/admin/backends' %}active{% endif %}">🔌 OpenAI Backends</a>
-      <a href="/admin/profiles" class="sidebar-link {% if request.path == '/admin/profiles' %}active{% endif %}">📂 Backend Profiles</a>
-      <a href="/admin/keys" class="sidebar-link {% if request.path == '/admin/keys' %}active{% endif %}">🔑 API Keys</a>
-      <a href="/admin/policies" class="sidebar-link {% if request.path == '/admin/policies' %}active{% endif %}">📋 Policies</a>
-    </div>
-    <div class="sidebar-section">
-      <div class="sidebar-title">Monitoring</div>
-      <a href="/admin/audit" class="sidebar-link {% if request.path == '/admin/audit' %}active{% endif %}">📝 Audit Records</a>
-      <a href="/admin/usage" class="sidebar-link {% if request.path == '/admin/usage' %}active{% endif %}">📊 Usage Metrics</a>
-      <a href="/admin/quotas" class="sidebar-link {% if request.path == '/admin/quotas' %}active{% endif %}">📈 Quotas</a>
-    </div>
-  </div>
-
-  <div class="admin-content" style="flex: 1; padding: var(--space-lg); overflow-y: auto;">
-    {% block admin_content %}{% endblock %}
-  </div>
+<div class="admin-content">
+  {% block admin_content %}{% endblock %}
 </div>
 
 {% block admin_modals %}{% endblock %}

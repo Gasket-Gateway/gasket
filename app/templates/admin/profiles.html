@@ -1,12 +1,12 @@
 {% extends "admin/base.html" %}
 
 {% block admin_title %}Backend Profiles{% endblock %}
+{% block admin_page_title %}Backend Profiles{% endblock %}
 
 {% block admin_content %}
 <div class="flex" style="align-items: center; justify-content: space-between; margin-bottom: var(--space-md);">
   <div>
-    <h2 style="margin-bottom: 0;">Backend Profiles</h2>
-    <p class="text-muted" style="margin-top: var(--space-xs);">Create, edit, and delete backend profiles with associated backends and policies.</p>
+    <p class="text-muted" style="margin-top: 0;">Create, edit, and delete backend profiles with associated backends and policies.</p>
   </div>
   <button class="btn btn-primary btn-sm" id="btn-add-profile">+ Add Profile</button>
 </div>
@@ -44,7 +44,10 @@
   <div class="modal" style="max-width: 640px;">
     <div class="modal-header">
       <h3 id="profile-modal-title">Add Profile</h3>
-      <button class="modal-close" id="profile-modal-close" aria-label="Close dialog">✕</button>
+      <div style="display: flex; gap: var(--space-xs);">
+        <button class="modal-expand" type="button" aria-label="Expand dialog" title="Toggle Fullscreen">⛶</button>
+        <button class="modal-close" id="profile-modal-close" aria-label="Close dialog">✕</button>
+      </div>
     </div>
     <form id="profile-form" autocomplete="off">
       <input type="hidden" id="profile-form-id" value="">
@@ -143,7 +146,10 @@
   <div class="modal">
     <div class="modal-header">
       <h3 id="profile-delete-title">Delete Profile</h3>
-      <button class="modal-close" id="profile-delete-close" aria-label="Close dialog">✕</button>
+      <div style="display: flex; gap: var(--space-xs);">
+        <button class="modal-expand" type="button" aria-label="Expand dialog" title="Toggle Fullscreen">⛶</button>
+        <button class="modal-close" id="profile-delete-close" aria-label="Close dialog">✕</button>
+      </div>
     </div>
     <div>
       <p>Are you sure you want to delete <strong id="profile-delete-name"></strong>?</p>

@@ -4,9 +4,9 @@
 
 {% block content %}
 <div class="flex" style="align-items: center; gap: var(--space-md); margin-bottom: var(--space-sm);">
-  <h1 class="page-title" style="margin-bottom: 0;">Your API Keys</h1>
+  <h1 class="page-title page-title-portal" style="margin-bottom: 0;">API Keys</h1>
 </div>
-<p class="text-muted">Create and manage API keys for accessing AI backends. <a href="/" style="font-size: 0.9rem;">← Back to Profiles</a></p>
+<p class="text-muted">Create and manage API keys for accessing AI backends.</p>
 
 <div style="margin-bottom: var(--space-md);">
   <button class="btn btn-primary btn-sm" id="portal-create-key-btn">+ Create API Key</button>
@@ -23,7 +23,10 @@
   <div class="modal" style="max-width: 520px;">
     <div class="modal-header">
       <h3 id="portal-create-key-title">Create API Key</h3>
-      <button class="modal-close" id="portal-create-key-close" aria-label="Close dialog">✕</button>
+      <div style="display: flex; gap: var(--space-xs);">
+        <button class="modal-expand" type="button" aria-label="Expand dialog" title="Toggle Fullscreen">⛶</button>
+        <button class="modal-close" id="portal-create-key-close" aria-label="Close dialog">✕</button>
+      </div>
     </div>
     <form id="portal-create-key-form" autocomplete="off">
       <div class="form-group">
@@ -65,7 +68,10 @@
   <div class="modal" style="max-width: 520px;">
     <div class="modal-header">
       <h3 id="portal-key-created-title">🔑 API Key Created</h3>
-      <button class="modal-close" id="portal-key-created-close" aria-label="Close dialog">✕</button>
+      <div style="display: flex; gap: var(--space-xs);">
+        <button class="modal-expand" type="button" aria-label="Expand dialog" title="Toggle Fullscreen">⛶</button>
+        <button class="modal-close" id="portal-key-created-close" aria-label="Close dialog">✕</button>
+      </div>
     </div>
     <div>
       <p style="margin-bottom: var(--space-sm); font-size: 0.85rem;">Your API key has been created. You can always reveal it later from your key list.</p>
@@ -86,7 +92,10 @@
   <div class="modal" style="max-width: 520px;">
     <div class="modal-header">
       <h3 id="portal-key-detail-title">Key Details</h3>
-      <button class="modal-close" id="portal-key-detail-close" aria-label="Close dialog">✕</button>
+      <div style="display: flex; gap: var(--space-xs);">
+        <button class="modal-expand" type="button" aria-label="Expand dialog" title="Toggle Fullscreen">⛶</button>
+        <button class="modal-close" id="portal-key-detail-close" aria-label="Close dialog">✕</button>
+      </div>
     </div>
     <div>
       <div id="portal-key-detail-body"></div>
@@ -103,7 +112,10 @@
   <div class="modal">
     <div class="modal-header">
       <h3 id="portal-key-revoke-title">Revoke API Key</h3>
-      <button class="modal-close" id="portal-key-revoke-close" aria-label="Close dialog">✕</button>
+      <div style="display: flex; gap: var(--space-xs);">
+        <button class="modal-expand" type="button" aria-label="Expand dialog" title="Toggle Fullscreen">⛶</button>
+        <button class="modal-close" id="portal-key-revoke-close" aria-label="Close dialog">✕</button>
+      </div>
     </div>
     <div>
       <p>Are you sure you want to revoke <strong id="portal-key-revoke-name"></strong>?</p>

@@ -21,7 +21,15 @@ def login_page():
 @login_required
 @groups_required("gasket-users")
 def portal_page():
-    """Render the main portal page (profiles)."""
+    """Render the main portal dashboard."""
+    return render_template("portal/dashboard.html")
+
+
+@portal_bp.route("/profiles")
+@login_required
+@groups_required("gasket-users")
+def portal_profiles_page():
+    """Render the backend profiles page."""
     return render_template("portal/profiles.html")
 
 

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — Gasket Gateway{% endblock %}
+
+{% block content %}
+<div class="flex" style="align-items: center; margin-bottom: var(--space-lg); gap: var(--space-md);">
+  <h1 class="page-title page-title-portal" style="margin-bottom: 0;">Dashboard</h1>
+</div>
+<p>Welcome, <strong>{{ session.get('user_name', 'User') }}</strong>. This is your personal dashboard.</p>
+
+<div class="grid grid-3" style="margin-top: var(--space-lg);">
+  <div class="card">
+    <div class="card-header">Backend Profiles</div>
+    <div class="card-body">
+      <p class="text-muted">You have access to backend profiles based on your group memberships.</p>
+    </div>
+    <div class="card-footer">
+      <a href="/profiles" class="btn btn-primary btn-sm">View Profiles →</a>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="card-header">API Keys</div>
+    <div class="card-body">
+      <p class="text-muted">Manage your personal API keys used to authenticate with AI backends.</p>
+    </div>
+    <div class="card-footer">
+      <a href="/keys" class="btn btn-outline btn-sm">Manage Keys →</a>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="card-header">Quota Usage</div>
+    <div class="card-body">
+      <p class="text-muted" style="margin-bottom: var(--space-sm);">Track your API usage and token consumption.</p>
+      <span class="badge badge-info">Coming Soon</span>
+    </div>
+  </div>
+</div>
+{% endblock %}

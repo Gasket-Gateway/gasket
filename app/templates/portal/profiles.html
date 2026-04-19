@@ -1,13 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}Your Profiles — Gasket Gateway{% endblock %}
+{% block title %}Backend Profiles — Gasket Gateway{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Portal</h1>
-<p>Welcome, <strong>{{ session.get('user_name', 'User') }}</strong>. This is the main portal for managing your AI backend access.</p>
-
-<!-- ═══ Backend Profiles ═══ -->
-<h2 style="margin-top: var(--space-xl);">Your Backend Profiles</h2>
+<div class="flex" style="align-items: center; margin-bottom: var(--space-lg); gap: var(--space-md);">
+  <h1 class="page-title page-title-portal" style="margin-bottom: 0;">Backend Profiles</h1>
+</div>
 <p class="text-muted">View your available backend profiles and accept required policies.</p>
 
 <div style="margin-bottom: var(--space-md);">
@@ -27,7 +25,10 @@
   <div class="modal" style="max-width: 640px;">
     <div class="modal-header">
       <h3 id="portal-policy-modal-title">Accept Policy</h3>
-      <button class="modal-close" id="portal-policy-modal-close" aria-label="Close dialog">✕</button>
+      <div style="display: flex; gap: var(--space-xs);">
+        <button class="modal-expand" type="button" aria-label="Expand dialog" title="Toggle Fullscreen">⛶</button>
+        <button class="modal-close" id="portal-policy-modal-close" aria-label="Close dialog">✕</button>
+      </div>
     </div>
     <div style="margin-bottom: var(--space-md);">
       <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: var(--space-sm);">Please read and accept the following policy:</p>

@@ -2,6 +2,7 @@
 
 import os
 import time
+from selenium.webdriver.common.by import By
 
 GASKET_URL = os.environ.get("GASKET_URL", "http://gasket:5000")
 
@@ -72,6 +73,24 @@ class TestAdminScreenshots:
         browser.get(f"{GASKET_URL}/admin/keys")
         take_screenshot(browser, "admin_keys")
 
+    def test_capture_admin_profiles_modal(self, browser, mock_data):
+        login_as(browser, "admin")
+        browser.get(f"{GASKET_URL}/admin/profiles")
+        btn = browser.find_element(By.ID, "btn-add-profile")
+        if btn:
+            btn.click()
+            time.sleep(0.5)
+            take_screenshot(browser, "admin_profiles_modal_add")
+
+    def test_capture_admin_backends_modal(self, browser, mock_data):
+        login_as(browser, "admin")
+        browser.get(f"{GASKET_URL}/admin/backends")
+        btn = browser.find_element(By.ID, "btn-add-backend")
+        if btn:
+            btn.click()
+            time.sleep(0.5)
+            take_screenshot(browser, "admin_backends_modal_add")
+
 
 class TestPortalScreenshots:
     """Captures screenshots of the user portal."""
@@ -86,3 +105,27 @@ class TestPortalScreenshots:
         login_as(browser, "admin")
         browser.get(f"{GASKET_URL}/keys")
         take_screenshot(browser, "portal_keys")
+
+    def test_capture_portal_profiles(self, browser, mock_data):
+        login_as(browser, "admin")
+        browser.get(f"{GASKET_URL}/profiles")
+        take_screenshot(browser, "portal_profiles")
+
+    def test_capture_portal_keys_modal(self, browser, mock_data):
+        login_as(browser, "admin")
+        browser.get(f"{GASKET_URL}/keys")
+        btn = browser.find_element(By.ID, "portal-create-key-btn")
+        if btn:
+            btn.click()
+            time.sleep(0.5)
+            take_screenshot(browser, "portal_keys_modal_add")
+
+    def test_capture_ui_demo(self, browser, mock_data):
+        login_as(browser, "admin")
+        browser.get(f"{GASKET_URL}/ui-demo")
+        take_screenshot(browser, "ui_demo_top")
+        
+        # Scroll down and capture another section
+        browser.execute_script("window.scrollTo(0, 1000);")
+        time.sleep(0.5)
+        take_screenshot(browser, "ui_demo_middle")

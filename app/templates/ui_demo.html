@@ -66,6 +66,7 @@ tabAutocompleteModel:
     <button class="btn btn-primary">Primary</button>
     <button class="btn btn-secondary">Secondary</button>
     <button class="btn btn-success">Success</button>
+    <button class="btn btn-warning">Warning</button>
     <button class="btn btn-danger">Danger</button>
     <button class="btn btn-info">Info</button>
     <button class="btn btn-outline">Outline</button>
@@ -708,7 +709,10 @@ banners:
     <div class="modal">
       <div class="modal-header">
         <h3 id="modal-title">Revoke API Key</h3>
-        <button class="modal-close" id="close-modal-btn" aria-label="Close dialog">✕</button>
+        <div style="display: flex; gap: var(--space-xs);">
+          <button class="modal-expand" type="button" aria-label="Expand dialog" title="Toggle Fullscreen">⛶</button>
+          <button class="modal-close" id="close-modal-btn" aria-label="Close dialog">✕</button>
+        </div>
       </div>
       <div>
         <p>Are you sure you want to revoke <strong>dev-key-1</strong>? This action will immediately invalidate the key.</p>

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Gasket Gateway — Authenticated proxy and portal for OpenAI-compliant backends">
   <title>{% block title %}Gasket Gateway{% endblock %}</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=1.8">
   <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
   <script src="{{ url_for('static', filename='js/code.js') }}" defer></script>
   <script src="{{ url_for('static', filename='js/table.js') }}" defer></script>
@@ -40,13 +40,17 @@
 
       <button id="navbar-burger" class="navbar-burger" aria-label="Toggle menu" aria-expanded="false" aria-controls="navbar-menu">☰</button>
 
-      <ul id="navbar-menu" class="navbar-nav" role="menubar">
+      <ul id="navbar-menu" class="navbar-nav {% block navbar_theme %}theme-portal{% endblock %}" role="menubar">
         {% if session.get('user_email') %}
-        <li role="none"><a href="/" role="menuitem" class="{% if request.path == '/' %}active{% endif %}" {% if request.path == '/' %}aria-current="page"{% endif %}>Portal</a></li>
+        {% block navbar_links %}
+        <li role="none"><a href="/" role="menuitem" class="{% if request.path == '/' %}active{% endif %}" {% if request.path == '/' %}aria-current="page"{% endif %}>Dashboard</a></li>
+        <li role="none"><a href="/profiles" role="menuitem" class="{% if request.path == '/profiles' %}active{% endif %}" {% if request.path == '/profiles' %}aria-current="page"{% endif %}>Profiles</a></li>
         <li role="none"><a href="/keys" role="menuitem" class="{% if request.path == '/keys' %}active{% endif %}" {% if request.path == '/keys' %}aria-current="page"{% endif %}>API Keys</a></li>
         {% if is_admin %}
-        <li role="none"><a href="/admin" role="menuitem" class="nav-admin {% if request.path.startswith('/admin') %}active{% endif %}" {% if request.path.startswith('/admin') %}aria-current="page"{% endif %}>Admin</a></li>
+        <li role="none" class="nav-separator">|</li>
+        <li role="none"><a href="/admin/status" role="menuitem" class="nav-btn-danger">Admin Panel</a></li>
         {% endif %}
+        {% endblock %}
         {% endif %}
         <li role="none" class="navbar-utils">
           <button id="width-toggle" class="btn-width-toggle" aria-label="Toggle full-width layout" aria-pressed="false" title="Expand to full width">⛶</button>
