@@ -1,10 +1,10 @@
 flask==3.1.*
 flask-sqlalchemy==3.1.*
 sqlalchemy==2.0.*
-gunicorn==23.*
-pyyaml==6.*
+gunicorn==25.3.*
+pyyaml==6.0.*
 psycopg2-binary==2.9.*
-prometheus-client==0.21.*
-authlib==1.4.*
-requests==2.32.*
-alembic==1.15.*
+prometheus-client==0.25.*
+authlib==1.7.*
+requests==2.33.*
+alembic==1.18.*

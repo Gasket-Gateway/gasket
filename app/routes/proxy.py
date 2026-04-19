@@ -4,15 +4,18 @@ Handles ``/v1/*`` requests authenticated via ``gsk_*`` API keys.
 The ``before_request`` hook validates the Bearer token and stores
 the resolved context (user, profile, backends) on ``flask.g``.
 
-Currently returns 501 for all authenticated requests — actual
-proxying to upstream OpenAI backends will be added in a later task.
+Authenticated requests are forwarded to the upstream OpenAI backend
+resolved from the API key's backend profile.
 """
 
 import logging
 
+import requests as upstream_requests
+
 from flask import Blueprint, g, jsonify, request
 
 from ..proxy import ProxyAuthError, validate_api_key
+from ..proxy_engine import forward_request, make_upstream_error, select_backend
 
 logger = logging.getLogger(__name__)
 
@@ -82,18 +85,16 @@ def authenticate_api_key():
 
 @proxy_bp.route("/<path:path>", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
 def proxy_catch_all(path):
-    """Catch-all route for /v1/* — proxy not yet implemented.
+    """Catch-all route for /v1/* — proxy to upstream backend.
 
     Authentication has already succeeded at this point (via
-    before_request). Returns 501 until the upstream proxying
-    logic is built.
+    before_request).  Selects a backend from the profile and
+    forwards the request upstream.
     """
     ctx = g.proxy_context
-    return _openai_error(
-        f"Proxy not yet implemented. Authenticated as {ctx['user_email']} "
-        f"via profile '{ctx['profile'].name}' "
-        f"({len(ctx['backends'])} backend(s) available).",
-        "server_error",
-        "not_implemented",
-        501,
-    )
+    backend = select_backend(ctx["backends"])
+
+    try:
+        return forward_request(backend, path, request)
+    except upstream_requests.exceptions.RequestException as exc:
+        return make_upstream_error(exc)

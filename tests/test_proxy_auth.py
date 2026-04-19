@@ -149,25 +149,26 @@ class TestProxyAuthWithKey:
         client.delete(f"/admin/api/backends/{self.backend_id}")
 
     def test_valid_key_passes_auth(self, client):
-        """A valid, active key passes authentication → 501 (proxy not implemented)."""
+        """A valid, active key passes authentication → 502 (backend unreachable)."""
         resp = client.post(
             "/v1/chat/completions",
             headers={"Authorization": f"Bearer {self.key_value}"},
             json={"model": "test", "messages": [{"role": "user", "content": "hello"}]},
         )
-        assert resp.status_code == 501
+        # Backend at localhost:9999 is not running, so the proxy returns 502
+        assert resp.status_code == 502
         data = resp.json()
-        assert data["error"]["code"] == "not_implemented"
-        assert "proxy-test-profile" in data["error"]["message"]
+        assert data["error"]["code"] == "upstream_connection_error"
 
     def test_valid_key_various_paths(self, client):
-        """Valid key works on different /v1/* subpaths."""
+        """Valid key works on different /v1/* subpaths — auth passes, backend unreachable."""
         for path in ["/v1/models", "/v1/completions", "/v1/embeddings"]:
             resp = client.get(
                 path,
                 headers={"Authorization": f"Bearer {self.key_value}"},
             )
-            assert resp.status_code == 501, f"Unexpected status on {path}"
+            # Auth succeeds but backend is unreachable → 502
+            assert resp.status_code == 502, f"Unexpected status on {path}"
 
     def test_revoked_key_rejected(self, client):
         """A revoked key is rejected → 401."""
@@ -191,7 +192,8 @@ class TestProxyAuthWithKey:
             "/v1/models",
             headers={"Authorization": f"bearer {self.key_value}"},
         )
-        assert resp.status_code == 501
+        # Auth succeeds but backend is unreachable → 502
+        assert resp.status_code == 502
 
 
 class TestProxyAuthExpiredKey:
