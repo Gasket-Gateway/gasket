@@ -112,12 +112,14 @@ def create_app(config_path=None):
     from .routes.health import health_bp
     from .routes.portal import portal_bp
     from .routes.admin import admin_bp
+    from .routes.proxy import proxy_bp
     from .routes.ui_demo import ui_demo_bp
     from .routes.errors import errors_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(portal_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(proxy_bp)
     app.register_blueprint(health_bp)
     app.register_blueprint(ui_demo_bp)
     app.register_blueprint(errors_bp)
